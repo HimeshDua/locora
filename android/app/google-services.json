@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "270432291898",
+    "project_id": "citi-guide-fire",
+    "storage_bucket": "citi-guide-fire.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270432291898:android:8134536eaff1f462c43903",
+        "android_client_info": {
+          "package_name": "com.example.citi_guide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7NZtnok6_y2dT-H7ZrLGXsfVGF0kwr3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:270432291898:android:d38a64df8ac1f7d2c43903",
+        "android_client_info": {
+          "package_name": "com.example.locora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7NZtnok6_y2dT-H7ZrLGXsfVGF0kwr3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
