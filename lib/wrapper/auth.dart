@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/screens/auth/login.dart';
-import 'package:locora/screens/essentials/home.dart';
+import 'package:locora/screens/city/city_selection.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -18,7 +18,7 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          return const HomeScreen();
+          return CitySelectionScreen();
         }
 
         return const LoginScreen();
