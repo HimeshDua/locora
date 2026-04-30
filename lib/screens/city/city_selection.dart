@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:locora/screens/city/city_details.dart';
+import 'package:locora/screens/essentials/main_nav.dart';
 
 class City {
   final String name;
@@ -39,38 +39,47 @@ class CitySelectionScreen extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 0.8,
           ),
-          itemBuilder: (_, i) {
+          itemBuilder: (context, i) {
             final city = cities[i];
-
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CityDetailScreen(city: city),
-                  ),
-                );
-              },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+            return Material(
+              borderRadius: BorderRadius.circular(20),
+              clipBehavior: Clip.antiAlias, // Ensures image doesn't bleed out
+              child: InkWell(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => MainScreen(city: city)),
+                  );
+                },
                 child: Stack(
                   children: [
+                    // Background Image
                     Positioned.fill(
-                      child: Image.network(city.image, fit: BoxFit.cover),
+                      child: Image.network(
+                        city.image,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (_, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                        errorBuilder: (_, __, ___) => const Icon(Icons.image),
+                      ),
                     ),
-
+                    // Gradient Overlay
                     Positioned.fill(
                       child: Container(
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.transparent, Colors.black54],
+                            colors: [Colors.transparent, Colors.black87],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
                         ),
                       ),
                     ),
-
+                    // Text Details
                     Positioned(
                       bottom: 12,
                       left: 12,
@@ -80,12 +89,18 @@ class CitySelectionScreen extends StatelessWidget {
                         children: [
                           Text(
                             city.name,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(color: Colors.white),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           Text(
                             city.description,
-                            style: const TextStyle(color: Colors.white70),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
