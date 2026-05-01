@@ -1,29 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:locora/screens/essentials/main_nav.dart';
+import 'package:locora/screens/essentials/navbar_layout.dart';
+import 'package:locora/data/cities.dart';
+import 'package:locora/types/index.dart';
+import 'package:locora/utils/persistance.dart';
+import 'package:locora/utils/redirects.dart';
 
-class City {
-  final String name;
-  final String image;
-  final String description;
-
-  City({required this.name, required this.image, required this.description});
-}
-
-class CitySelectionScreen extends StatelessWidget {
+class CitySelectionScreen extends StatefulWidget {
   const CitySelectionScreen({super.key});
 
-  static final List<City> cities = [
-    City(
-      name: "Karachi",
-      image: "https://images.unsplash.com/photo-1580655653885-65763b2597d0",
-      description: "City of lights",
-    ),
-    City(
-      name: "Lahore",
-      image: "https://images.unsplash.com/photo-1609947017136-9daf32a5eb16",
-      description: "Cultural capital",
-    ),
-  ];
+  static final List<City> cities = pakistaniCities;
+
+  @override
+  State<CitySelectionScreen> createState() => _CitySelectionScreenState();
+}
+
+class _CitySelectionScreenState extends State<CitySelectionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    redirectBasedOnStoredCity(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +28,7 @@ class CitySelectionScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: GridView.builder(
-          itemCount: cities.length,
+          itemCount: CitySelectionScreen.cities.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 12,
@@ -40,20 +36,24 @@ class CitySelectionScreen extends StatelessWidget {
             childAspectRatio: 0.8,
           ),
           itemBuilder: (context, i) {
-            final city = cities[i];
+            final city = CitySelectionScreen.cities[i];
             return Material(
               borderRadius: BorderRadius.circular(20),
-              clipBehavior: Clip.antiAlias, // Ensures image doesn't bleed out
+              clipBehavior: Clip.antiAlias,
               child: InkWell(
                 onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => MainScreen(city: city)),
-                  );
+                  saveSelectedCity(city);
+                  if (context.mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => NavbarLayout(city: city),
+                      ),
+                    );
+                  }
                 },
                 child: Stack(
                   children: [
-                    // Background Image
                     Positioned.fill(
                       child: Image.network(
                         city.image,
@@ -64,7 +64,7 @@ class CitySelectionScreen extends StatelessWidget {
                             child: CircularProgressIndicator(),
                           );
                         },
-                        errorBuilder: (_, __, ___) => const Icon(Icons.image),
+                        errorBuilder: (_, _, _) => const Icon(Icons.image),
                       ),
                     ),
                     // Gradient Overlay

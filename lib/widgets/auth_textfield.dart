@@ -42,7 +42,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           hintText: widget.hint,
           errorText: widget.errorText,
           hintStyle: text.bodyMedium?.copyWith(
-            color: colors.onSurface.withOpacity(0.5),
+            color: colors.onSurface.withValues(alpha: 0.5),
           ),
 
           prefixIcon: Padding(
@@ -52,7 +52,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
               size: 20,
               color: isFocused
                   ? colors.primary
-                  : colors.onSurface.withOpacity(0.6),
+                  : colors.onSurface.withValues(alpha: 0.6),
             ),
           ),
           prefixIconConstraints: const BoxConstraints(
@@ -61,7 +61,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           ),
 
           filled: true,
-          fillColor: colors.surface.withOpacity(0.6),
+          fillColor: colors.surface.withValues(alpha: 0.6),
 
           contentPadding: const EdgeInsets.symmetric(
             vertical: 16,
@@ -75,7 +75,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
 
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: colors.outline.withOpacity(0.2)),
+            borderSide: BorderSide(
+              color: colors.outline.withValues(alpha: 0.2),
+            ),
           ),
 
           focusedBorder: OutlineInputBorder(

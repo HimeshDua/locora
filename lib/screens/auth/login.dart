@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/screens/auth/register.dart';
+import 'package:locora/utils/redirects.dart';
 import 'package:locora/widgets/auth_textfield.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -53,8 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Login successful")));
-
-      // 👉 TODO: Navigate to home screen
+      redirectBasedOnAuthnCity(context);
     } on FirebaseAuthException catch (e) {
       String message = "Login failed";
 
@@ -91,9 +93,9 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.3),
-                    colors.primary.withOpacity(0.2),
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withValues(alpha: 0.3),
+                    colors.primary.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.4),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -116,9 +118,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: colors.surface.withOpacity(0.85),
+                    color: colors.surface.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: colors.outline.withOpacity(0.2)),
+                    border: Border.all(
+                      color: colors.outline.withValues(alpha: 0.2),
+                    ),
                   ),
 
                   child: Column(
@@ -138,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         "Discover your city like never before",
                         style: text.bodyMedium?.copyWith(
-                          color: colors.onSurface.withOpacity(0.7),
+                          color: colors.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
 

@@ -1,7 +1,14 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:locora/screens/auth/login.dart';
+import 'package:locora/data/cities.dart';
+import 'package:locora/utils/is_indicators.dart';
+import 'package:locora/utils/persistance.dart';
+import 'package:locora/utils/redirects.dart';
 import 'package:locora/widgets/auth_textfield.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -19,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  String? selectedCity;
 
   String? nameError;
   String? emailError;
@@ -45,6 +53,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           : null;
     });
 
+    if (selectedCity == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please select a city")));
+      return false;
+    }
+
     return nameError == null &&
         emailError == null &&
         passwordError == null &&
@@ -52,31 +67,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> register() async {
+    String name = nameController.text.trim();
+
     if (!validate()) return;
-    print('dsads!');
 
     setState(() => isLoading = true);
 
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user == null) {
-        print('User is currently signed out!');
-        print('User is currently signed out!');
-      } else {
-        print('User is signed in as ${user.email}');
-      }
-    });
-
     try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      await userCredential.user!.updateDisplayName(nameController.text.trim());
+      final user = credential.user;
+      if (user == null) throw Exception("User creation failed");
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created successfully")),
-      );
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        "uid": user.uid,
+        "name": name,
+        "city": selectedCity,
+        "email": emailController.text.trim(),
+        "createdAt": FieldValue.serverTimestamp(),
+        "admin": isAdmin(emailController.text.trim()) || false,
+      });
+
+      await user.updateDisplayName(name);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Account created successfully")));
+      redirectBasedOnAuthnCity(context);
     } on FirebaseAuthException catch (e) {
       String message = "Something went wrong";
 
@@ -113,9 +133,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.black.withOpacity(0.3),
-                    colors.primary.withOpacity(0.2),
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withValues(alpha: 0.3),
+                    colors.primary.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.4),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -139,9 +159,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: colors.surface.withOpacity(0.85),
+                    color: colors.surface.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: colors.outline.withOpacity(0.2)),
+                    border: Border.all(
+                      color: colors.outline.withValues(alpha: 0.2),
+                    ),
                   ),
 
                   child: Column(
@@ -165,6 +187,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
 
                       const SizedBox(height: 14),
+
+                      DropdownButton<String>(
+                        hint: Text('Select your city'),
+                        items: pakistaniCities
+                            .map(
+                              (city) => DropdownMenuItem<String>(
+                                value: city.name,
+                                child: Text(city.name),
+                              ),
+                            )
+                            .toList(),
+                        value: selectedCity,
+                        onChanged: (String? city) {
+                          setState(() {
+                            selectedCity = city;
+                            final selectedCityObject = pakistaniCities
+                                .firstWhere(
+                                  (c) => c.name == city,
+                                  orElse: () => pakistaniCities.first,
+                                );
+
+                            saveSelectedCity(selectedCityObject);
+                          });
+                        },
+                      ),
 
                       AuthTextField(
                         hint: "Email",
@@ -252,9 +299,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           //       child: Container(
           //         padding: const EdgeInsets.all(24),
           //         decoration: BoxDecoration(
-          //           color: colors.surface.withOpacity(0.85),
+          //           color: colors.surface.withValues(alpha: 0.85),
           //           borderRadius: BorderRadius.circular(24),
-          //           border: Border.all(color: colors.outline.withOpacity(0.2)),
+          //           border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
           //         ),
 
           //         child: Column(
@@ -273,7 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           //             Text(
           //               "Create an account to explore your city",
           //               style: text.bodyMedium?.copyWith(
-          //                 color: colors.onSurface.withOpacity(0.7),
+          //                 color: colors.onSurface.withValues(alpha: 0.7),
           //               ),
           //             ),
 
@@ -334,7 +381,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           //             Text(
           //               "By signing up, you agree to our Terms & Privacy Policy",
           //               style: text.bodySmall?.copyWith(
-          //                 color: colors.onSurface.withOpacity(0.6),
+          //                 color: colors.onSurface.withValues(alpha: 0.6),
           //               ),
           //             ),
 

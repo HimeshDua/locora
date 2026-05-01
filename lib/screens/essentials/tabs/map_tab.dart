@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:locora/screens/city/city_selection.dart';
+import 'package:locora/types/index.dart';
 
 class MapTab extends StatelessWidget {
   final City city;

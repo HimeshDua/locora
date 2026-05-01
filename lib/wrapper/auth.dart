@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:locora/screens/admin/dashboard.dart';
 import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/city/city_selection.dart';
+import 'package:locora/screens/essentials/navbar_layout.dart';
+import 'package:locora/utils/is_indicators.dart';
+import 'package:locora/utils/persistance.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -21,11 +25,32 @@ class AuthGate extends StatelessWidget {
             );
           }
 
-          if (snapshot.hasData) {
-            return const CitySelectionScreen();
+          final user = snapshot.data;
+
+          if (user == null) {
+            return const LoginScreen();
           }
 
-          return const LoginScreen();
+          return FutureBuilder(
+            future: getSelectedCity(),
+            builder: (context, citySnapshot) {
+              if (!citySnapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final city = citySnapshot.data;
+
+              if (city == null || city.name.isEmpty) {
+                if (isAdmin(user.email!)) {
+                  return const AdminDashboardScreen();
+                } else {
+                  return const CitySelectionScreen();
+                }
+              }
+
+              return NavbarLayout(city: city);
+            },
+          );
         },
       ),
     );

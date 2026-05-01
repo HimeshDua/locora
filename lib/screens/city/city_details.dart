@@ -1,49 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:locora/screens/city/detailed_city_card.dart';
-import 'package:locora/screens/city/city_selection.dart';
-
-class Place {
-  final String city;
-  final String name;
-  final String image;
-  final String description;
-  final double rating;
-
-  Place({
-    required this.city,
-    required this.name,
-    required this.image,
-    required this.description,
-    required this.rating,
-  });
-}
+import 'package:locora/screens/city/detailed_attraction_card.dart';
+import 'package:locora/data/intrests.dart';
+import 'package:locora/types/index.dart';
 
 class CityDetailScreen extends StatelessWidget {
   final City city;
 
   const CityDetailScreen({super.key, required this.city});
 
-  static final List<Place> places = [
-    Place(
-      city: "Karachi",
-      name: "Clifton Beach",
-      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-      description: "Beautiful beach in Karachi",
-      rating: 4.5,
-    ),
-    Place(
-      city: "Lahore",
-      name: "Food Street",
-      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
-      description: "Best food experience",
-      rating: 4.7,
-    ),
-  ];
+  static final List<PointOfInterest> places = pakistaniCityAttractions;
 
   @override
   Widget build(BuildContext context) {
     final filteredPlaces = places
-        .where((p) => p.city.contains(city.name))
+        .where((p) => p.city.toLowerCase().contains(city.name.toLowerCase()))
         .toList();
 
     return Scaffold(
@@ -90,7 +60,7 @@ class CityDetailScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => DetailScreen(place: place),
+                        builder: (_) => DetailAttractionScreen(place: place),
                       ),
                     );
                   },
@@ -106,7 +76,7 @@ class CityDetailScreen extends StatelessWidget {
                             top: Radius.circular(20),
                           ),
                           child: Image.network(
-                            place.image,
+                            place.imageUrl,
                             height: 180,
                             fit: BoxFit.cover,
                           ),
@@ -117,7 +87,7 @@ class CityDetailScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                place.name,
+                                place.title,
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
 
