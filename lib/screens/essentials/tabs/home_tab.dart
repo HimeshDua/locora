@@ -94,6 +94,13 @@ class _HomeTabState extends State<HomeTab> {
                     height: 190,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, object, stackTrace) {
+                      return const Icon(Icons.error);
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
                   ),
                 ),
 

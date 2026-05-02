@@ -31,6 +31,8 @@ class AuthGate extends StatelessWidget {
             return const LoginScreen();
           }
 
+          final admin = isAdmin(user.email!);
+
           return FutureBuilder(
             future: getSelectedCity(),
             builder: (context, citySnapshot) {
@@ -48,7 +50,7 @@ class AuthGate extends StatelessWidget {
                 }
               }
 
-              return NavbarLayout(city: city);
+              return NavbarLayout(city: city, admin: admin);
             },
           );
         },

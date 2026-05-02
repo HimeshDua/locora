@@ -79,6 +79,15 @@ class CityDetailScreen extends StatelessWidget {
                             place.imageUrl,
                             height: 180,
                             fit: BoxFit.cover,
+                            errorBuilder: (context, object, stackTrace) {
+                              return const Icon(Icons.error);
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
                           ),
                         ),
                         Padding(

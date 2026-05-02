@@ -58,13 +58,15 @@ class _CitySelectionScreenState extends State<CitySelectionScreen> {
                       child: Image.network(
                         city.imageUrl,
                         fit: BoxFit.cover,
-                        loadingBuilder: (_, child, progress) {
-                          if (progress == null) return child;
+                        errorBuilder: (_, _, _) {
+                          return const Icon(Icons.error);
+                        },
+                        loadingBuilder: (_, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
                         },
-                        errorBuilder: (_, _, _) => const Icon(Icons.image),
                       ),
                     ),
                     // Gradient Overlay

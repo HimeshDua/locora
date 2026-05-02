@@ -60,7 +60,17 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
           SizedBox(
             height: 300,
             width: double.infinity,
-            child: Image.network(widget.place.imageUrl, fit: BoxFit.cover),
+            child: Image.network(
+              widget.place.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, object, stackTrace) {
+                return const Icon(Icons.error);
+              },
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(child: CircularProgressIndicator());
+              },
+            ),
           ),
 
           // BACK BUTTON
