@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/screens/admin/dashboard.dart';
 import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/city/city_selection.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';
-import 'package:locora/utils/is_indicators.dart';
+import 'package:locora/types/index.dart';
 import 'package:locora/utils/persistance.dart';
 
 class AuthGate extends StatelessWidget {
@@ -31,25 +32,32 @@ class AuthGate extends StatelessWidget {
             return const LoginScreen();
           }
 
-          final admin = isAdmin(user.email!);
+          getUserData() async {
+            final userData = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+            return userData;
+          }
 
           return FutureBuilder(
-            future: getSelectedCity(),
-            builder: (context, citySnapshot) {
-              if (!citySnapshot.hasData) {
+            future: Future.wait([getUserData(), getSelectedCity()]),
+            builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              final city = citySnapshot.data;
+              final DocumentSnapshot userDoc = snapshot.data![0];
+              final City? city = snapshot.data![1];
 
-              if (city == null || city.name.isEmpty) {
-                if (isAdmin(user.email!)) {
-                  return const AdminDashboardScreen();
-                } else {
-                  return const CitySelectionScreen();
-                }
+              final userData = userDoc.data() as Map<String, dynamic>;
+
+              late final bool admin = userData["admin"] ?? false;
+              final String isCity = userData['city'] ?? '';
+
+              if (city == null || city.name.isEmpty || isCity.isEmpty) {
+                return CitySelectionScreen();
               }
-
               return NavbarLayout(city: city, admin: admin);
             },
           );
