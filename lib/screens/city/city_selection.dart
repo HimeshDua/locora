@@ -56,7 +56,7 @@ class _CitySelectionScreenState extends State<CitySelectionScreen> {
                   children: [
                     Positioned.fill(
                       child: Image.network(
-                        city.image,
+                        city.imageUrl,
                         fit: BoxFit.cover,
                         loadingBuilder: (_, child, progress) {
                           if (progress == null) return child;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:locora/types/index.dart';
 
 class DetailAttractionScreen extends StatefulWidget {
-  final PointOfInterest place;
+  final Place place;
 
   const DetailAttractionScreen({super.key, required this.place});
 

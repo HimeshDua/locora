@@ -8,7 +8,7 @@ class CityDetailScreen extends StatelessWidget {
 
   const CityDetailScreen({super.key, required this.city});
 
-  static final List<PointOfInterest> places = pakistaniCityAttractions;
+  static final List<Place> places = pakistaniCityAttractions;
 
   @override
   Widget build(BuildContext context) {

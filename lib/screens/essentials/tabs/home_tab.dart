@@ -17,7 +17,7 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    List<PointOfInterest> places = pakistaniCityAttractions;
+    List<Place> places = pakistaniCityAttractions;
 
     final filteredPlaces = places
         .where((p) => p.city.toLowerCase() == widget.city.name.toLowerCase())
@@ -53,7 +53,7 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildPlaceCard(PointOfInterest place) {
+  Widget _buildPlaceCard(Place place) {
     final theme = Theme.of(context);
 
     return Container(

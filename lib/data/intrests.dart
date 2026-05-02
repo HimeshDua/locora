@@ -1,8 +1,8 @@
 import 'package:locora/types/index.dart';
 
-final List<PointOfInterest> pakistaniCityAttractions = [
+final List<Place> pakistaniCityAttractions = [
   // === KARACHI ===
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Attraction',
     title: 'Mazar-e-Quaid',
@@ -12,7 +12,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Mazar-e-Quaid+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?karachi,quaid-mausoleum',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Restaurant',
     title: 'Kolachi Restaurant',
@@ -22,7 +22,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Kolachi+Restaurant+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?karachi,food,bbq',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Hotel',
     title: 'Pearl Continental Karachi',
@@ -32,7 +32,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Pearl+Continental+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?luxury+hotel,karachi',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Attraction',
     title: 'Clifton Beach (Sea View)',
@@ -42,7 +42,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Clifton+Beach+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?clifton,beach',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Restaurant',
     title: 'BBQ Tonight',
@@ -52,7 +52,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=BBQ+Tonight+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?karachi,streetfood',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Hotel',
     title: 'Avari Towers Karachi',
@@ -62,7 +62,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Avari+Towers+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,skyscraper',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Attraction',
     title: 'Mohatta Palace',
@@ -72,7 +72,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Mohatta+Palace+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?mohatta,palace',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Event',
     title: 'Karachi Literature Festival',
@@ -82,7 +82,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Karachi+Literature+Festival',
     imageUrl: 'https://source.unsplash.com/featured/?literature,festival',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Restaurant',
     title: 'Lotus Court',
@@ -92,7 +92,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Lotus+Court+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?chinese,food,restaurant',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Attraction',
     title: 'Frere Hall',
@@ -102,7 +102,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Frere+Hall+Karachi',
     imageUrl: 'https://source.unsplash.com/featured/?frere,hall,architecture',
   ),
-  PointOfInterest(
+  Place(
     city: "Karachi",
     category: 'Restaurant',
     title: 'Café Mughal',
@@ -114,7 +114,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === LAHORE ===
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Attraction',
     title: 'Badshahi Mosque',
@@ -124,7 +124,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Badshahi+Mosque+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,badshahi,mosque',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Restaurant',
     title: 'Mughal E Azam',
@@ -134,7 +134,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Mughal+E+Azam+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,mughlai,food',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Hotel',
     title: 'The Mughal Hotel',
@@ -144,7 +144,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=The+Mughal+Hotel+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,hotel,luxury',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Attraction',
     title: 'Lahore Fort (Shahi Qila)',
@@ -154,7 +154,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Lahore+Fort',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,fort,history',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Restaurant',
     title: 'Café Mughal',
@@ -164,7 +164,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Cafe+Mughal+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,cafe,food',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Event',
     title: 'Lahore Literature Festival',
@@ -174,7 +174,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Lahore+Literature+Festival',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,literature',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Attraction',
     title: 'Wagah Border',
@@ -184,7 +184,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Wagah+Border',
     imageUrl: 'https://source.unsplash.com/featured/?wagah,border',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Hotel',
     title: 'Golden Tulip Lahore',
@@ -194,7 +194,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Golden+Tulip+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,hotel,modern',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Restaurant',
     title: 'Karachi Restaurant',
@@ -204,7 +204,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Karachi+Restaurant+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,karahi',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Attraction',
     title: 'Jama Masjid',
@@ -214,7 +214,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Jama+Mosque+Lahore',
     imageUrl: 'https://source.unsplash.com/featured/?lahore,jama,mosque',
   ),
-  PointOfInterest(
+  Place(
     city: "Lahore",
     category: 'Restaurant',
     title: 'Cilantro',
@@ -226,7 +226,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === ISLAMABAD ===
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Attraction',
     title: 'Faisal Mosque',
@@ -236,7 +236,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Faisal+Mosque+Islamabad',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,faisal,mosque',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Hotel',
     title: 'Serena Hotel Islamabad',
@@ -246,7 +246,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Serena+Hotel+Islamabad',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,serena,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Restaurant',
     title: 'The Monal',
@@ -256,7 +256,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=The+Monal+Islamabad',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,monal,dining',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Attraction',
     title: 'Pakistan Monument',
@@ -267,7 +267,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     imageUrl:
         'https://source.unsplash.com/featured/?islamabad,pakistan,monument',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Attraction',
     title: 'Taxila Archaeological Site',
@@ -277,7 +277,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Taxila+Archaeological+Site',
     imageUrl: 'https://source.unsplash.com/featured/?taxila,ruins',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Hotel',
     title: 'Pearl Continental Islamabad',
@@ -287,7 +287,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Pearl+Continental+Islamabad',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,pc,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Restaurant',
     title: 'Café Mughal',
@@ -297,7 +297,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Cafe+Mughal+Islamabad',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,cafe,food',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Attraction',
     title: 'Daman-e-Koh',
@@ -307,7 +307,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Daman-e-Koh',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,viewpoint',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Event',
     title: 'Islamabad Food Festival',
@@ -317,7 +317,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Islamabad+Food+Festival',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,food,festival',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Restaurant',
     title: 'Gulzar-e-Iqbal',
@@ -327,7 +327,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Gulzar-e-Iqbal+Islamabad',
     imageUrl: 'https://source.unsplash.com/featured/?islamabad,kebabs',
   ),
-  PointOfInterest(
+  Place(
     city: "Islamabad",
     category: 'Attraction',
     title: 'Faisal Mosque Gardens',
@@ -339,7 +339,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === FAISALABAD ===
-  PointOfInterest(
+  Place(
     city: "Faisalabad",
     category: 'Attraction',
     title: 'Clock Tower (Ghanta Ghar)',
@@ -349,7 +349,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Clock+Tower+Faisalabad',
     imageUrl: 'https://source.unsplash.com/featured/?faisalabad,clocktower',
   ),
-  PointOfInterest(
+  Place(
     city: "Faisalabad",
     category: 'Hotel',
     title: 'Hotel Faisalabad',
@@ -359,7 +359,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Hotel+Faisalabad',
     imageUrl: 'https://source.unsplash.com/featured/?faisalabad,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Faisalabad",
     category: 'Restaurant',
     title: 'Biryani House',
@@ -371,7 +371,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === RAWALPINDI ===
-  PointOfInterest(
+  Place(
     city: "Rawalpindi",
     category: 'Attraction',
     title: 'Rawalpindi Saddar',
@@ -381,7 +381,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Rawalpindi+Saddar',
     imageUrl: 'https://source.unsplash.com/featured/?rawalpindi,saddar',
   ),
-  PointOfInterest(
+  Place(
     city: "Rawalpindi",
     category: 'Hotel',
     title: 'Hotel Grand Continental',
@@ -394,7 +394,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === MULTAN ===
-  PointOfInterest(
+  Place(
     city: "Multan",
     category: 'Attraction',
     title: 'Multan Fort',
@@ -404,7 +404,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Multan+Fort',
     imageUrl: 'https://source.unsplash.com/featured/?multan,fort',
   ),
-  PointOfInterest(
+  Place(
     city: "Multan",
     category: 'Restaurant',
     title: 'Mughal Restaurant',
@@ -416,7 +416,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === PESHAWAR ===
-  PointOfInterest(
+  Place(
     city: "Peshawar",
     category: 'Attraction',
     title: 'Peshawar Museum',
@@ -426,7 +426,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Peshawar+Museum',
     imageUrl: 'https://source.unsplash.com/featured/?peshawar,museum',
   ),
-  PointOfInterest(
+  Place(
     city: "Peshawar",
     category: 'Hotel',
     title: 'Hotel Khan',
@@ -436,7 +436,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Hotel+Khan+Peshawar',
     imageUrl: 'https://source.unsplash.com/featured/?peshawar,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Peshawar",
     category: 'Restaurant',
     title: 'Kabab Junction',
@@ -448,7 +448,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === HYDERABAD ===
-  PointOfInterest(
+  Place(
     city: "Hyderabad",
     category: 'Attraction',
     title: 'Hyrabad Fort',
@@ -458,7 +458,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Hyderabad+Fort',
     imageUrl: 'https://source.unsplash.com/featured/?hyderabad,fort',
   ),
-  PointOfInterest(
+  Place(
     city: "Hyderabad",
     category: 'Hotel',
     title: 'Hotel Sapphire',
@@ -468,7 +468,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Hotel+Sapphire+Hyderabad',
     imageUrl: 'https://source.unsplash.com/featured/?hyderabad,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Hyderabad",
     category: 'Restaurant',
     title: 'Sindhi Restaurant',
@@ -480,7 +480,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === QUETTA ===
-  PointOfInterest(
+  Place(
     city: "Quetta",
     category: 'Attraction',
     title: 'Quetta Fort',
@@ -490,7 +490,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Quetta+Fort',
     imageUrl: 'https://source.unsplash.com/featured/?quetta,fort',
   ),
-  PointOfInterest(
+  Place(
     city: "Quetta",
     category: 'Hotel',
     title: 'Hotel Balochistan',
@@ -500,7 +500,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Hotel+Balochistan+Quetta',
     imageUrl: 'https://source.unsplash.com/featured/?quetta,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Quetta",
     category: 'Restaurant',
     title: 'Balochi Restaurant',
@@ -512,7 +512,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === GUJRANWALA ===
-  PointOfInterest(
+  Place(
     city: "Gujranwala",
     category: 'Attraction',
     title: 'Gujranwala Zoo',
@@ -522,7 +522,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Gujranwala+Zoo',
     imageUrl: 'https://source.unsplash.com/featured/?gujranwala,zoo',
   ),
-  PointOfInterest(
+  Place(
     city: "Gujranwala",
     category: 'Hotel',
     title: 'Hotel Gulshan',
@@ -532,7 +532,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
     googleMapsLink: 'https://maps.google.com/?q=Hotel+Gulshan+Gujranwala',
     imageUrl: 'https://source.unsplash.com/featured/?gujranwala,hotel',
   ),
-  PointOfInterest(
+  Place(
     city: "Gujranwala",
     category: 'Restaurant',
     title: 'Chicken Tikka House',
@@ -544,7 +544,7 @@ final List<PointOfInterest> pakistaniCityAttractions = [
   ),
 
   // === SIALKOT ===
-  PointOfInterest(
+  Place(
     city: "Sialkot",
     category: 'Attraction',
     title: 'Sialkot Sports Museum',

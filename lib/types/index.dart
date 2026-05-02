@@ -1,4 +1,4 @@
-class PointOfInterest {
+class Place {
   String category; // 'Attraction', 'Restaurant', 'Hotel', 'Event'
   String title;
   String city;
@@ -7,7 +7,7 @@ class PointOfInterest {
   String googleMapsLink;
   String imageUrl;
 
-  PointOfInterest({
+  Place({
     required this.category,
     required this.title,
     required this.city,
@@ -20,22 +20,30 @@ class PointOfInterest {
 
 class City {
   final String name;
-  final String image;
+  final String imageUrl;
   final String description;
+  final String? funFact;
 
-  City({required this.name, required this.image, required this.description});
+  City({
+    required this.name,
+    required this.imageUrl,
+    required this.description,
+    this.funFact,
+  });
 
   Map<String, dynamic> toJson() => {
     'name': name,
-    'image': image,
+    'image': imageUrl,
     'description': description,
+    'funFact': funFact,
   };
 
   factory City.fromJson(Map<String, dynamic> json) {
     return City(
       name: json['name'],
       description: json['description'],
-      image: json['image'],
+      imageUrl: json['image'],
+      funFact: json['funFact'],
     );
   }
 }
