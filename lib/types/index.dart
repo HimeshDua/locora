@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Place {
   String category; // 'Attraction', 'Restaurant', 'Hotel', 'Event'
   String title;
@@ -16,6 +18,20 @@ class Place {
     required this.googleMapsLink,
     required this.imageUrl,
   });
+
+  factory Place.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+
+    return Place(
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      googleMapsLink: data['googleMapsLink'] ?? '',
+      category: data['category'] ?? '',
+      rating: (data['rating'] ?? 0).toDouble(),
+      city: data['city'] ?? '',
+    );
+  }
 }
 
 class City {

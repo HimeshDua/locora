@@ -1,4 +1,4 @@
-import 'package:cloudinary_flutter/cloudinary_object.dart';
+import 'package:locora/utils/cloudinary_config.dart';
 import 'package:locora/utils/themes.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,7 +8,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  CloudinaryObject.fromCloudName(cloudName: "deedj7iii");
+  CloudinaryConfig.initialize();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:locora/screens/admin/manage_splash_screen.dart';
-import 'package:locora/widgets/admin/add_splash_screen.dart';
+import 'package:locora/widgets/admin/add_place_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});

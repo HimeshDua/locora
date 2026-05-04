@@ -1,7 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:locora/screens/essentials/navbar_layout.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/types/index.dart';
+import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/utils/persistance.dart';
 import 'package:locora/utils/redirects.dart';
 
@@ -15,9 +16,11 @@ class CitySelectionScreen extends StatefulWidget {
 }
 
 class _CitySelectionScreenState extends State<CitySelectionScreen> {
+  String? userId;
   @override
   void initState() {
     super.initState();
+    userId = FirebaseAuth.instance.currentUser?.uid;
     redirectBasedOnStoredCity(context);
   }
 
@@ -41,15 +44,14 @@ class _CitySelectionScreenState extends State<CitySelectionScreen> {
               borderRadius: BorderRadius.circular(20),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () {
-                  saveSelectedCity(city);
+                onTap: () async {
+                  await saveSelectedCityToFirebase(city.name, userId!);
+                  await saveSelectedCity(city);
+
                   if (context.mounted) {
-                    Navigator.pushReplacement(
+                    Navigator.of(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => NavbarLayout(city: city),
-                      ),
-                    );
+                    ).pushNamedAndRemoveUntil('/', (route) => false);
                   }
                 },
                 child: Stack(

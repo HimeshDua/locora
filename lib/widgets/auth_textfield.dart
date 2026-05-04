@@ -7,12 +7,14 @@ class AuthTextField extends StatefulWidget {
   final bool obscure;
   final TextEditingController? controller;
   final String? errorText;
+  final TextInputType? inputType;
 
   const AuthTextField({
     super.key,
     required this.controller,
     required this.hint,
     required this.icon,
+    this.inputType,
     this.errorText,
     this.obscure = false,
   });
@@ -34,6 +36,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
         setState(() => isFocused = value);
       },
       child: TextField(
+        keyboardType: widget.inputType ?? TextInputType.text,
         controller: widget.controller,
         obscureText: widget.obscure,
         style: text.bodyMedium?.copyWith(color: colors.onSurface),

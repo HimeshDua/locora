@@ -1,11 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:locora/screens/city/detailed_attraction_card.dart';
-import 'package:locora/data/intrests.dart';
 import 'package:locora/types/index.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class HomeTab extends StatefulWidget {
-  final City city;
-
+  final City? city;
   const HomeTab({super.key, required this.city});
 
   @override
@@ -17,36 +18,79 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    List<Place> places = pakistaniCityAttractions;
+    final City? city = widget.city;
 
-    final filteredPlaces = places
-        .where((p) => p.city.toLowerCase() == widget.city.name.toLowerCase())
-        .where((p) => p.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    if (city == null || city.name.isEmpty) {
+      return const Center(child: Text("City not found"));
+    }
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(
-          widget.city.name,
-          style: Theme.of(context).textTheme.titleMedium,
+          widget.city!.name,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: Column(
         children: [
           _buildSearchBar(context),
-
           Expanded(
-            child: filteredPlaces.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: filteredPlaces.length,
-                    itemBuilder: (context, i) {
-                      return _buildPlaceCard(filteredPlaces[i]);
-                    },
-                  ),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('places')
+                  .where('city', isEqualTo: city.name)
+                  .snapshots(),
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator.adaptive(),
+                  );
+                }
+
+                final docs = snap.data?.docs ?? [];
+                final places = docs
+                    .map((doc) => Place.fromFirestore(doc))
+                    .where(
+                      (p) =>
+                          p.title.toLowerCase().contains(query.toLowerCase()),
+                    )
+                    .toList();
+
+                if (places.isEmpty) return _buildEmptyState();
+
+                return MasonryGridView.count(
+                  padding: const EdgeInsets.all(16),
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  itemCount: places.length,
+                  itemBuilder: (context, i) {
+                    return _buildPlaceCard(places[i]);
+                  },
+                );
+
+                // return GridView.builder(
+                //   padding: const EdgeInsets.symmetric(
+                //     horizontal: 16,
+                //     vertical: 8,
+                //   ),
+                //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                //     crossAxisCount: 2,
+                //     crossAxisSpacing: 12,
+                //     mainAxisSpacing: 12,
+                //     childAspectRatio: 1.2,
+                //   ),
+                //   itemCount: places.length,
+                //   itemBuilder: (context, i) => _buildPlaceCard(places[i]),
+                // );
+              },
+            ),
           ),
         ],
       ),
@@ -56,160 +100,160 @@ class _HomeTabState extends State<HomeTab> {
   Widget _buildPlaceCard(Place place) {
     final theme = Theme.of(context);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-            color: Colors.black.withValues(alpha: 0.05),
-          ),
-        ],
-      ),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DetailAttractionScreen(place: place),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailAttractionScreen(place: place),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(0),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
             ),
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // IMAGE
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: Image.network(
-                    place.imageUrl,
-                    height: 190,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, object, stackTrace) {
-                      return const Icon(Icons.error);
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(child: CircularProgressIndicator());
-                    },
-                  ),
-                ),
-
-                // CATEGORY BADGE
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      place.category,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // CONTENT
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // TITLE + RATING
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          place.title,
-                          style: theme.textTheme.titleMedium,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // IMAGE SECTION
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      child: CachedNetworkImage(
+                        imageUrl: place.imageUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Container(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Icon(Icons.broken_image_outlined),
                         ),
                       ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            color: theme.colorScheme.tertiary,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            place.rating.toString(),
-                            style: theme.textTheme.labelLarge,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    place.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                ],
+                    // Category Badge with Blur effect
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.9,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          place.category,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              // DETAILS SECTION
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            place.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star_rounded,
+                              color: Colors.amber[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              place.rating.toStringAsFixed(1),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      place.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 64, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
-          Text("No results found", style: theme.textTheme.bodyMedium),
-        ],
       ),
     );
   }
 
   Widget _buildSearchBar(BuildContext context) {
     final theme = Theme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: TextField(
-        onChanged: (value) => setState(() => query = value),
-        decoration: InputDecoration(
-          hintText: "Search ${widget.city.name}...",
-          prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
-          filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide.none,
-          ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SearchBar(
+        hintText: "Explore ${widget.city!.name}...",
+        elevation: WidgetStateProperty.all(0),
+        backgroundColor: WidgetStateProperty.all(
+          theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         ),
+        onChanged: (value) => setState(() => query = value),
+        leading: Icon(Icons.search, color: theme.colorScheme.primary),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.map_outlined,
+            size: 48,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
+          const Text("No hidden gems found here yet."),
+        ],
       ),
     );
   }

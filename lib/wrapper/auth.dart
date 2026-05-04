@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:locora/screens/admin/dashboard.dart';
 import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/city/city_selection.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';
@@ -43,6 +42,14 @@ class AuthGate extends StatelessWidget {
           return FutureBuilder(
             future: Future.wait([getUserData(), getSelectedCity()]),
             builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text("Error: ${snapshot.error}"));
+              }
+
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -50,12 +57,16 @@ class AuthGate extends StatelessWidget {
               final DocumentSnapshot userDoc = snapshot.data![0];
               final City? city = snapshot.data![1];
 
+              if (!userDoc.exists) {
+                return const Center(child: Text("User not found"));
+              }
+
               final userData = userDoc.data() as Map<String, dynamic>;
 
               late final bool admin = userData["admin"] ?? false;
               final String isCity = userData['city'] ?? '';
 
-              if (city == null || city.name.isEmpty || isCity.isEmpty) {
+              if (isCity.isEmpty) {
                 return CitySelectionScreen();
               }
               return NavbarLayout(city: city, admin: admin);

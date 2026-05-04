@@ -26,7 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isLoading = false;
 
-  /// 🔥 VALIDATION
   bool validate() {
     setState(() {
       emailError = !RegExp(r'\S+@\S+\.\S+').hasMatch(emailController.text)
@@ -41,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return emailError == null && passwordError == null;
   }
 
-  /// 🔥 LOGIN LOGIC
   Future<void> login() async {
     if (!validate()) return;
 
@@ -104,7 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          /// Optional soft blur (reduced)
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
@@ -128,7 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// Branding
                       Text(
                         "Locora",
                         style: text.headlineLarge?.copyWith(
@@ -148,20 +144,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 30),
 
-                      /// Email
                       AuthTextField(
+                        inputType: TextInputType.emailAddress,
                         hint: "Email",
-                        icon: HugeIcons.strokeRoundedMail01, // ✅ FIXED
+                        icon: HugeIcons.strokeRoundedMail01,
                         controller: emailController,
                         errorText: emailError,
                       ),
 
                       const SizedBox(height: 16),
 
-                      /// Password
                       AuthTextField(
                         hint: "Password",
-                        icon: HugeIcons.strokeRoundedLock, // ✅ FIXED
+                        icon: HugeIcons.strokeRoundedLock,
                         obscure: true,
                         controller: passwordController,
                         errorText: passwordError,
@@ -179,7 +174,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 10),
 
-                      /// Login Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -208,7 +202,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 16),
 
-                      /// Divider
                       Row(
                         children: [
                           Expanded(child: Divider(color: colors.outline)),
@@ -222,7 +215,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 16),
 
-                      /// Register Redirect
                       Center(
                         child: TextButton(
                           onPressed: () {
