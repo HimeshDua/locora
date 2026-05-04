@@ -1,5 +1,5 @@
 name: locora
-description: "A new Flutter project."
+description: "A clean, modern location pin icon with a subtle city skyline inside it, representing guided city exploration and discovery."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -24,6 +24,13 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: "^0.14.4"
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/locora.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
