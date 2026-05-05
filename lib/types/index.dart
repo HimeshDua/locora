@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Place {
+  String id;
   String category; // 'Attraction', 'Restaurant', 'Hotel', 'Event'
   String title;
   String city;
@@ -10,6 +11,7 @@ class Place {
   String imageUrl;
 
   Place({
+    required this.id,
     required this.category,
     required this.title,
     required this.city,
@@ -23,6 +25,7 @@ class Place {
     final data = doc.data() as Map<String, dynamic>;
 
     return Place(
+      id: data['id'] ?? '',
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
@@ -65,15 +68,29 @@ class City {
 }
 
 class Review {
+  final String id;
   final String userName;
   final String comment;
   final double rating;
   final DateTime date;
 
   Review({
+    required this.id,
     required this.userName,
     required this.comment,
     required this.rating,
     required this.date,
   });
+
+  factory Review.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+
+    return Review(
+      id: doc.id,
+      userName: data['userName'] ?? '',
+      comment: data['comment'] ?? '',
+      rating: (data['rating'] ?? 0).toDouble(),
+      date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
 }

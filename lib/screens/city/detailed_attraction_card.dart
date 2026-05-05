@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:locora/types/index.dart';
+import 'package:locora/utils/firebase/actions.dart';
 
 class DetailAttractionScreen extends StatefulWidget {
   final Place place;
@@ -14,38 +17,39 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
   final TextEditingController _controller = TextEditingController();
 
   final double _selectedRating = 4;
+  List<Review> tempReviews = [];
+  void _addReview() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
 
-  List<Review> reviews = [
-    Review(
-      userName: "Ali",
-      comment: "Amazing place! Highly recommended.",
-      rating: 4.5,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Review(
-      userName: "Sara",
-      comment: "Good experience but a bit crowded.",
-      rating: 4,
-      date: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-  ];
-
-  void _addReview() {
-    if (_controller.text.trim().isEmpty) return;
-
-    setState(() {
-      reviews.insert(
-        0,
-        Review(
-          userName: "You",
-          comment: _controller.text.trim(),
-          rating: _selectedRating,
-          date: DateTime.now(),
-        ),
-      );
-    });
+    String? userName = FirebaseAuth.instance.currentUser?.displayName;
+    if (text.isEmpty) return;
+    if (userName == null) return;
 
     _controller.clear();
+
+    try {
+      final tempReview = Review(
+        id: "temp-${DateTime.now()}",
+        userName: userName,
+        comment: text,
+        rating: _selectedRating,
+        date: DateTime.now(),
+      );
+
+      setState(() {
+        tempReviews.add(tempReview);
+      });
+
+      await addReview(
+        placeId: widget.place.id,
+        userName: userName,
+        comment: text,
+        rating: _selectedRating,
+      );
+    } catch (e) {
+      debugPrint("Error adding review: $e");
+    }
   }
 
   @override
@@ -121,15 +125,53 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                 const SizedBox(height: 12),
 
                 Expanded(
-                  child: ListView.separated(
-                    itemCount: reviews.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final r = reviews[index];
-                      return _buildReviewCard(r, theme);
+                  child: StreamBuilder(
+                    stream: FirebaseFirestore.instance
+                        .collection('reviews')
+                        .where('placeId', isEqualTo: place.id)
+                        .orderBy('date', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasError) {
+                        print(snapshot.error);
+                        return Center(child: Text("Error: ${snapshot.error}"));
+                      }
+
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final reviewDocs = snapshot.data?.docs ?? [];
+
+                      final List<Review> firestoreReviews = reviewDocs
+                          .map((review) => Review.fromFirestore(review))
+                          .toList();
+
+                      final allReviews = [...tempReviews, ...firestoreReviews];
+                      return ListView.separated(
+                        itemCount: reviewDocs.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final r = allReviews[index];
+                          return _buildReviewCard(r, theme);
+                        },
+                      );
                     },
                   ),
                 ),
+
+                // child: ListView.separated(
+                //   itemCount: reviews.length,
+                //   separatorBuilder: (_, _) => const SizedBox(height: 12),
+                //   itemBuilder: (context, index) {
+                //     final r = reviews[index];
+                //     return _buildReviewCard(r, theme);
+                //   },
+                // ),
               ],
             ),
           ),

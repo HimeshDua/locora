@@ -40,6 +40,22 @@ class _HomeTabState extends State<HomeTab> {
       body: Column(
         children: [
           _buildSearchBar(context),
+
+          SizedBox(
+            height: 50,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildChip("Attractions"),
+                _buildChip("Restaurants"),
+                _buildChip("Hotels"),
+                _buildChip("Events"),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -54,6 +70,7 @@ class _HomeTabState extends State<HomeTab> {
                 }
 
                 final docs = snap.data?.docs ?? [];
+
                 final places = docs
                     .map((doc) => Place.fromFirestore(doc))
                     .where(
@@ -219,6 +236,13 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildChip(String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Chip(label: Text(label)),
     );
   }
 

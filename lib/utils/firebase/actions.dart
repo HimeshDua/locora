@@ -7,3 +7,18 @@ Future<void> saveSelectedCityToFirebase(String cityName, String? uid) async {
     });
   }
 }
+
+Future<void> addReview({
+  required String placeId,
+  required String userName,
+  required String comment,
+  required double rating,
+}) async {
+  await FirebaseFirestore.instance.collection('reviews').add({
+    'placeId': placeId,
+    'userName': userName,
+    'comment': comment,
+    'rating': rating,
+    'date': FieldValue.serverTimestamp(),
+  });
+}
