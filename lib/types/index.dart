@@ -25,7 +25,7 @@ class Place {
     final data = doc.data() as Map<String, dynamic>;
 
     return Place(
-      id: data['id'] ?? '',
+      id: doc.id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
@@ -92,5 +92,44 @@ class Review {
       rating: (data['rating'] ?? 0).toDouble(),
       date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+}
+
+class FavoritePlace {
+  final String userId;
+  final String placeId;
+  final String title;
+  final String imageUrl;
+  final DateTime? addedAt;
+
+  FavoritePlace({
+    required this.userId,
+    required this.placeId,
+    required this.title,
+    required this.imageUrl,
+    this.addedAt,
+  });
+
+  factory FavoritePlace.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+
+    return FavoritePlace(
+      userId: data['userId'] ?? '',
+      placeId: data['placeId'] ?? '',
+      title: data['title'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      addedAt: (data['addedAt'] as Timestamp?)?.toDate(),
+    );
+  }
+
+  /// Convert Model -> Firestore
+  Map<String, dynamic> toFirestore() {
+    return {
+      'userId': userId,
+      'placeId': placeId,
+      'title': title,
+      'imageUrl': imageUrl,
+      'addedAt': FieldValue.serverTimestamp(),
+    };
   }
 }

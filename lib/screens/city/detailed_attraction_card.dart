@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,31 +18,21 @@ class DetailAttractionScreen extends StatefulWidget {
 class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
   final TextEditingController _controller = TextEditingController();
 
-  final double _selectedRating = 4;
-  List<Review> tempReviews = [];
+  double _selectedRating = 4;
+  bool isFavorite = false;
+  var user = null as User?;
+
   void _addReview() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    String? userName = FirebaseAuth.instance.currentUser?.displayName;
+    String? userName = user?.displayName;
     if (text.isEmpty) return;
     if (userName == null) return;
 
     _controller.clear();
 
     try {
-      final tempReview = Review(
-        id: "temp-${DateTime.now()}",
-        userName: userName,
-        comment: text,
-        rating: _selectedRating,
-        date: DateTime.now(),
-      );
-
-      setState(() {
-        tempReviews.add(tempReview);
-      });
-
       await addReview(
         placeId: widget.place.id,
         userName: userName,
@@ -52,6 +44,76 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     }
   }
 
+  Future<void> _toggleFavorite() async {
+    if (user == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please login first")));
+      return;
+    }
+
+    try {
+      final ref = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .collection('favorites')
+          .doc(widget.place.id);
+
+      if (isFavorite) {
+        await ref.delete();
+      } else {
+        final favorite = FavoritePlace(
+          userId: user!.uid,
+          placeId: widget.place.id,
+          title: widget.place.title,
+          imageUrl: widget.place.imageUrl,
+        );
+
+        await ref.set(favorite.toFirestore());
+      }
+    } catch (e) {
+      debugPrint("Favorite error: $e");
+    }
+
+    setState(() {
+      isFavorite = !isFavorite;
+      user = FirebaseAuth.instance.currentUser;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFavorite ? "Added to favorites ❤️" : "Removed from favorites",
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRatingSelector() {
+    return Row(
+      children: List.generate(5, (index) {
+        final star = index + 1;
+        return IconButton(
+          icon: Icon(
+            Icons.star,
+            color: star <= _selectedRating ? Colors.amber : Colors.grey,
+          ),
+          onPressed: () {
+            setState(() {
+              _selectedRating = star.toDouble();
+            });
+          },
+        );
+      }),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    user = FirebaseAuth.instance.currentUser;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -60,10 +122,10 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // IMAGE HEADER
           SizedBox(
             height: 300,
             width: double.infinity,
+
             child: Image.network(
               widget.place.imageUrl,
               fit: BoxFit.cover,
@@ -77,16 +139,31 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
             ),
           ),
 
-          // BACK BUTTON
           Positioned(
             top: 40,
             left: 16,
-            child: CircleAvatar(
-              backgroundColor: Colors.black54,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _circleBtn(
+                  icon: Icons.arrow_back,
+                  onTap: () => Navigator.pop(context),
+                ),
+
+                Row(
+                  children: [
+                    _buildFavoriteButton(theme),
+                    const SizedBox(width: 8),
+                    _circleBtn(
+                      icon: Icons.map,
+                      onTap: () {
+                        // TODO
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
@@ -103,6 +180,13 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(place.title, style: theme.textTheme.headlineSmall),
+                const SizedBox(height: 6),
+                Text(
+                  place.city,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
 
                 const SizedBox(height: 10),
 
@@ -110,10 +194,24 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                   children: [
                     Icon(Icons.star, color: theme.colorScheme.tertiary),
                     const SizedBox(width: 6),
-                    Text(place.rating.toString()),
+                    Text(
+                      place.rating.toStringAsFixed(1),
+                      style: theme.textTheme.labelLarge,
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(place.category),
+                    ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
 
                 Text(place.description),
@@ -137,6 +235,7 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                       }
 
                       if (snapshot.hasError) {
+                        // ignore: avoid_print
                         print(snapshot.error);
                         return Center(child: Text("Error: ${snapshot.error}"));
                       }
@@ -151,9 +250,16 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                           .map((review) => Review.fromFirestore(review))
                           .toList();
 
-                      final allReviews = [...tempReviews, ...firestoreReviews];
+                      final allReviews = [...firestoreReviews];
+
+                      if (allReviews.isEmpty) {
+                        return const Center(
+                          child: Text("No reviews yet. Be the first!"),
+                        );
+                      }
+
                       return ListView.separated(
-                        itemCount: reviewDocs.length,
+                        itemCount: allReviews.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final r = allReviews[index];
@@ -163,20 +269,29 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                     },
                   ),
                 ),
-
-                // child: ListView.separated(
-                //   itemCount: reviews.length,
-                //   separatorBuilder: (_, _) => const SizedBox(height: 12),
-                //   itemBuilder: (context, index) {
-                //     final r = reviews[index];
-                //     return _buildReviewCard(r, theme);
-                //   },
-                // ),
               ],
             ),
           ),
           _buildCommentInput(theme),
         ],
+      ),
+    );
+  }
+
+  Widget _circleBtn({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color ?? Colors.white),
       ),
     );
   }
@@ -193,19 +308,41 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 14, child: Text(r.userName[0])),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Text(r.userName[0]),
+              ),
               const SizedBox(width: 8),
-              Text(r.userName, style: theme.textTheme.labelLarge),
-              const Spacer(),
-              Icon(Icons.star, size: 16, color: theme.colorScheme.tertiary),
-              const SizedBox(width: 4),
-              Text(r.rating.toString()),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(r.userName, style: theme.textTheme.labelLarge),
+                    Text(
+                      "${r.date.toLocal()}".split(' ')[0],
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+
+              Row(
+                children: List.generate(
+                  r.rating.toInt(),
+                  (i) => Icon(
+                    Icons.star,
+                    size: 14,
+                    color: theme.colorScheme.tertiary,
+                  ),
+                ),
+              ),
             ],
           ),
 
           const SizedBox(height: 8),
-
-          Text(r.comment, style: theme.textTheme.bodyMedium),
+          Text(r.comment),
         ],
       ),
     );
@@ -227,37 +364,69 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // TEXT INPUT
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: "Write a review...",
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHighest,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
+            _buildRatingSelector(), // 👈 NOW USED
+
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: "Write a review...",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
 
-            const SizedBox(width: 8),
+                const SizedBox(width: 8),
 
-            // SEND BUTTON
-            CircleAvatar(
-              backgroundColor: theme.colorScheme.primary,
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
-                onPressed: _addReview,
-              ),
+                CircleAvatar(
+                  backgroundColor: theme.colorScheme.primary,
+                  child: IconButton(
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: _controller.text.trim().isEmpty
+                        ? null
+                        : _addReview,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFavoriteButton(ThemeData theme) {
+    if (user == null) {
+      return _circleBtn(icon: Icons.favorite_border, onTap: _toggleFavorite);
+    }
+
+    final ref = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('favorites')
+        .doc(widget.place.id);
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: ref.snapshots(),
+      builder: (context, snapshot) {
+        final isFav = snapshot.data?.exists ?? false;
+
+        return _circleBtn(
+          icon: isFav ? Icons.favorite : Icons.favorite_border,
+          color: isFav ? Theme.of(context).colorScheme.error : Colors.white,
+          onTap: _toggleFavorite,
+        );
+      },
     );
   }
 }

@@ -70,7 +70,6 @@ class _HomeTabState extends State<HomeTab> {
                 }
 
                 final docs = snap.data?.docs ?? [];
-
                 final places = docs
                     .map((doc) => Place.fromFirestore(doc))
                     .where(
@@ -91,21 +90,6 @@ class _HomeTabState extends State<HomeTab> {
                     return _buildPlaceCard(places[i]);
                   },
                 );
-
-                // return GridView.builder(
-                //   padding: const EdgeInsets.symmetric(
-                //     horizontal: 16,
-                //     vertical: 8,
-                //   ),
-                //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                //     crossAxisCount: 2,
-                //     crossAxisSpacing: 12,
-                //     mainAxisSpacing: 12,
-                //     childAspectRatio: 1.2,
-                //   ),
-                //   itemCount: places.length,
-                //   itemBuilder: (context, i) => _buildPlaceCard(places[i]),
-                // );
               },
             ),
           ),
@@ -137,7 +121,6 @@ class _HomeTabState extends State<HomeTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // IMAGE SECTION
               AspectRatio(
                 aspectRatio: 16 / 9,
                 child: Stack(
@@ -154,7 +137,6 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ),
                     ),
-                    // Category Badge with Blur effect
                     Positioned(
                       top: 8,
                       left: 8,
