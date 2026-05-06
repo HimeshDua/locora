@@ -2,13 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Place {
   String id;
-  String category; // 'Attraction', 'Restaurant', 'Hotel', 'Event'
+  String category;
   String title;
   String city;
   String description;
-  double rating; // 1-5
+  double rating;
   String googleMapsLink;
   String imageUrl;
+
+  double? lat;
+  double? lng;
 
   Place({
     required this.id,
@@ -19,6 +22,8 @@ class Place {
     required this.rating,
     required this.googleMapsLink,
     required this.imageUrl,
+    this.lat,
+    this.lng,
   });
 
   factory Place.fromFirestore(DocumentSnapshot doc) {
@@ -33,6 +38,8 @@ class Place {
       category: data['category'] ?? '',
       rating: (data['rating'] ?? 0).toDouble(),
       city: data['city'] ?? '',
+      lat: (data['lat'] ?? 0).toDouble(),
+      lng: (data['lng'] ?? 0).toDouble(),
     );
   }
 }
@@ -98,8 +105,16 @@ class Review {
 class FavoritePlace {
   final String userId;
   final String placeId;
+
   final String title;
   final String imageUrl;
+
+  final String category;
+  final String city;
+  final String description;
+  final double rating;
+  final String googleMapsLink;
+
   final DateTime? addedAt;
 
   FavoritePlace({
@@ -107,6 +122,11 @@ class FavoritePlace {
     required this.placeId,
     required this.title,
     required this.imageUrl,
+    required this.category,
+    required this.city,
+    required this.description,
+    required this.rating,
+    required this.googleMapsLink,
     this.addedAt,
   });
 
@@ -118,17 +138,28 @@ class FavoritePlace {
       placeId: data['placeId'] ?? '',
       title: data['title'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
+      category: data['category'] ?? '',
+      city: data['city'] ?? '',
+      description: data['description'] ?? '',
+      rating: (data['rating'] is int)
+          ? (data['rating'] as int).toDouble()
+          : (data['rating'] ?? 0.0).toDouble(),
+      googleMapsLink: data['googleMapsLink'] ?? '',
       addedAt: (data['addedAt'] as Timestamp?)?.toDate(),
     );
   }
 
-  /// Convert Model -> Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
       'placeId': placeId,
       'title': title,
       'imageUrl': imageUrl,
+      'category': category,
+      'city': city,
+      'description': description,
+      'rating': rating,
+      'googleMapsLink': googleMapsLink,
       'addedAt': FieldValue.serverTimestamp(),
     };
   }

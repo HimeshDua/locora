@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:locora/screens/city/detailed_attraction_card.dart';
 import 'package:locora/types/index.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -15,203 +16,273 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   String query = "";
+  String selectedCategory = "All";
+
+  final categories = ["All", "Attractions", "Restaurants", "Hotels", "Events"];
 
   @override
   Widget build(BuildContext context) {
-    final City? city = widget.city;
+    final city = widget.city;
+    final theme = Theme.of(context);
 
     if (city == null || city.name.isEmpty) {
       return const Center(child: Text("City not found"));
     }
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          widget.city!.name,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(theme),
+            _buildSearchBar(theme),
+            _buildCategories(),
+            const SizedBox(height: 8),
+            Expanded(child: _buildPlaces()),
+          ],
         ),
-        centerTitle: true,
       ),
-      body: Column(
-        children: [
-          _buildSearchBar(context),
+    );
+  }
 
-          SizedBox(
-            height: 50,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildChip("Attractions"),
-                _buildChip("Restaurants"),
-                _buildChip("Hotels"),
-                _buildChip("Events"),
-              ],
+  // 🔥 HEADER (modern)
+  Widget _buildHeader(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedLocation01,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            widget.city!.name,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
           ),
-
-          const SizedBox(height: 10),
-
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('places')
-                  .where('city', isEqualTo: city.name)
-                  .snapshots(),
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator.adaptive(),
-                  );
-                }
-
-                final docs = snap.data?.docs ?? [];
-                final places = docs
-                    .map((doc) => Place.fromFirestore(doc))
-                    .where(
-                      (p) =>
-                          p.title.toLowerCase().contains(query.toLowerCase()),
-                    )
-                    .toList();
-
-                if (places.isEmpty) return _buildEmptyState();
-
-                return MasonryGridView.count(
-                  padding: const EdgeInsets.all(16),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  itemCount: places.length,
-                  itemBuilder: (context, i) {
-                    return _buildPlaceCard(places[i]);
-                  },
-                );
-              },
-            ),
+          const Spacer(),
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedNotification03,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPlaceCard(Place place) {
-    final theme = Theme.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailAttractionScreen(place: place),
-          ),
+  Widget _buildSearchBar(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
         ),
-        borderRadius: BorderRadius.circular(0),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(0),
-            border: Border.all(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        child: TextField(
+          onChanged: (v) => setState(() => query = v),
+          decoration: InputDecoration(
+            hintText: "Explore ${widget.city!.name}...",
+            border: InputBorder.none,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedSearch02,
+                color: theme.colorScheme.primary,
+              ),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategories() {
+    final theme = Theme.of(context);
+
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (_, i) {
+          final cat = categories[i];
+          final selected = cat == selectedCategory;
+
+          return GestureDetector(
+            onTap: () => setState(() => selectedCategory = cat),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                cat,
+                style: TextStyle(
+                  color: selected
+                      ? Colors.white
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        },
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemCount: categories.length,
+      ),
+    );
+  }
+
+  Widget _buildPlaces() {
+    final city = widget.city!;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('places')
+          .where('city', isEqualTo: city.name)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final docs = snap.data?.docs ?? [];
+
+        final places = docs.map((e) => Place.fromFirestore(e)).where((p) {
+          final matchesQuery = p.title.toLowerCase().contains(
+            query.toLowerCase(),
+          );
+
+          final matchesCategory =
+              selectedCategory == "All" || p.category == selectedCategory;
+
+          return matchesQuery && matchesCategory;
+        }).toList();
+
+        if (places.isEmpty) return _buildEmpty();
+
+        return MasonryGridView.count(
+          padding: const EdgeInsets.all(16),
+          crossAxisCount: 2,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          itemCount: places.length,
+          itemBuilder: (_, i) => _buildCard(places[i]),
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(Place place) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => DetailAttractionScreen(place: place)),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
             children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Stack(
+              CachedNetworkImage(
+                imageUrl: place.imageUrl,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+
+              // gradient overlay
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.6),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ),
+
+              // content
+              Positioned(
+                left: 10,
+                right: 10,
+                bottom: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      child: CachedNetworkImage(
-                        imageUrl: place.imageUrl,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: (context, url, error) => Container(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Icon(Icons.broken_image_outlined),
-                        ),
+                    Text(
+                      place.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedStar,
+                          size: 14,
+                          color: Colors.amber,
                         ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withValues(
-                            alpha: 0.9,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
+                        const SizedBox(width: 4),
+                        Text(
+                          place.rating.toStringAsFixed(1),
+                          style: const TextStyle(color: Colors.white),
                         ),
-                        child: Text(
-                          place.category,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
               ),
 
-              // DETAILS SECTION
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            place.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.star_rounded,
-                              color: Colors.amber[700],
-                              size: 16,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              place.rating.toStringAsFixed(1),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+              // category tag
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    place.category,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      place.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -221,44 +292,20 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildChip(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Chip(label: Text(label)),
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context) {
+  Widget _buildEmpty() {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SearchBar(
-        hintText: "Explore ${widget.city!.name}...",
-        elevation: WidgetStateProperty.all(0),
-        backgroundColor: WidgetStateProperty.all(
-          theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        ),
-        onChanged: (value) => setState(() => query = value),
-        leading: Icon(Icons.search, color: theme.colorScheme.primary),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: 16),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.map_outlined,
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedMaps,
             size: 48,
-            color: Theme.of(context).colorScheme.outline,
+            color: theme.colorScheme.outline,
           ),
           const SizedBox(height: 12),
-          const Text("No hidden gems found here yet."),
+          const Text("No places found"),
         ],
       ),
     );
