@@ -2,6 +2,16 @@ import 'dart:convert';
 import 'package:locora/types/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+Future<void> saveFirstTime(bool firstTime) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('init_first_time', firstTime);
+}
+
+Future<bool> getFirstTime() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('init_first_time') ?? true;
+}
+
 Future<void> saveLoginState(bool isLoggedIn) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setBool('is_logged_in', isLoggedIn);

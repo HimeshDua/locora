@@ -4,72 +4,83 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/city/city_selection.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';
+import 'package:locora/screens/essentials/on_boarding.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/persistance.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<DocumentSnapshot?> _getUserDoc(String uid) async {
+    return FirebaseFirestore.instance.collection('users').doc(uid).get();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            );
+        builder: (context, authSnapshot) {
+          if (authSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          final user = snapshot.data;
+          final user = authSnapshot.data;
 
-          if (user == null) {
-            return const LoginScreen();
-          }
-
-          getUserData() async {
-            final userData = await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .get();
-            return userData;
-          }
-
-          return FutureBuilder(
-            future: Future.wait([getUserData(), getSelectedCity()]),
-            builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          return FutureBuilder<bool>(
+            future: getFirstTime(),
+            builder: (context, firstTimeSnapshot) {
+              if (!firstTimeSnapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (snapshot.hasError) {
-                return Center(child: Text("Error: ${snapshot.error}"));
+              final isFirstTime = firstTimeSnapshot.data!;
+
+              if (isFirstTime) {
+                return const OnboardingScreen();
               }
 
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
+              if (user == null) {
+                return const LoginScreen();
               }
 
-              final DocumentSnapshot userDoc = snapshot.data![0];
-              final City? city = snapshot.data![1];
+              return FutureBuilder<DocumentSnapshot?>(
+                future: _getUserDoc(user.uid),
+                builder: (context, userSnapshot) {
+                  if (!userSnapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              if (!userDoc.exists) {
-                return const Center(child: Text("User not found"));
-              }
+                  final userDoc = userSnapshot.data;
 
-              final userData = userDoc.data() as Map<String, dynamic>;
+                  if (userDoc == null || !userDoc.exists) {
+                    return const CitySelectionScreen();
+                  }
 
-              late final bool admin = userData["admin"] ?? false;
-              final String isCity = userData['city'] ?? '';
+                  final data = userDoc.data() as Map<String, dynamic>;
 
-              if (isCity.isEmpty) {
-                return CitySelectionScreen();
-              }
-              return NavbarLayout(city: city, admin: admin);
+                  final String city = data["city"] ?? "";
+                  final bool admin = data["admin"] ?? false;
+
+                  if (city.isEmpty) {
+                    return const CitySelectionScreen();
+                  }
+
+                  return FutureBuilder<City?>(
+                    future: getSelectedCity(),
+                    builder: (context, citySnapshot) {
+                      if (!citySnapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      return NavbarLayout(
+                        city: citySnapshot.data!,
+                        admin: admin,
+                      );
+                    },
+                  );
+                },
+              );
             },
           );
         },
