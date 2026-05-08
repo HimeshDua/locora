@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/types/index.dart';
 
 Future<void> saveSelectedCityToFirebase(String cityName, String? uid) async {
@@ -31,4 +32,11 @@ Future<List<Place>> fetchPlacesByCity(String cityName) async {
       .get();
 
   return snapshot.docs.map((doc) => Place.fromFirestore(doc)).toList();
+}
+
+Future updateUserDisplayName(String name, String userId) async {
+  await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
+  await FirebaseFirestore.instance.collection('users').doc(userId).set({
+    'name': name,
+  }, SetOptions(merge: true));
 }

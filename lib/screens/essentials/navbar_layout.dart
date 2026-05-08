@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:locora/data/cities.dart';
+import 'package:locora/main.dart';
 import 'package:locora/screens/admin/dashboard.dart';
 import 'package:locora/screens/essentials/tabs/favorites_tab.dart';
 import 'package:locora/screens/essentials/tabs/home_tab.dart';
@@ -27,7 +28,10 @@ class _NavbarLayoutState extends State<NavbarLayout> {
     if (widget.admin == true) const AdminDashboardScreen(),
     MapTabWrapper(city: widget.city ?? defaultCity),
     const FavoritesTab(),
-    const ProfileTab(),
+    ProfileTab(
+      isDarkMode: Application.of(context).isDarkMode,
+      onThemeToggle: Application.of(context).toggleTheme,
+    ),
   ];
 
   @override
@@ -44,7 +48,6 @@ class _NavbarLayoutState extends State<NavbarLayout> {
         ),
       ),
 
-      // 👇 MODERN FLOATING NAVBAR
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

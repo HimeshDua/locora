@@ -2,6 +2,16 @@ import 'dart:convert';
 import 'package:locora/types/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+Future<void> saveTheme(String theme) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('theme', theme);
+}
+
+Future<String> getTheme() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('theme') ?? "dark";
+}
+
 Future<void> saveFirstTime(bool firstTime) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setBool('init_first_time', firstTime);

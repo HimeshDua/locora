@@ -1,16 +1,15 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
 
 class DetailAttractionScreen extends StatefulWidget {
   final Place place;
-
   const DetailAttractionScreen({super.key, required this.place});
 
   @override
@@ -18,7 +17,8 @@ class DetailAttractionScreen extends StatefulWidget {
 }
 
 class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
-  final TextEditingController _controller = TextEditingController();
+  final _controller = TextEditingController();
+  final _scrollController = ScrollController();
 
   double _selectedRating = 4;
   User? user;
@@ -29,12 +29,18 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     user = FirebaseAuth.instance.currentUser;
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _addReview() async {
     final text = _controller.text.trim();
     if (text.isEmpty || user?.displayName == null) return;
-
     _controller.clear();
-
+    FocusScope.of(context).unfocus();
     await addReview(
       placeId: widget.place.id,
       userName: user!.displayName!,
@@ -45,7 +51,6 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
 
   Future<void> _toggleFavorite(bool isFav) async {
     if (user == null) return;
-
     final ref = FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
@@ -56,68 +61,75 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
       await ref.delete();
     } else {
       final p = widget.place;
-
-      final fav = FavoritePlace(
-        userId: user!.uid,
-
-        placeId: p.id,
-        title: p.title,
-        imageUrl: p.imageUrl,
-        category: p.category,
-        city: p.city,
-        description: p.description,
-        rating: p.rating,
-        googleMapsLink: p.googleMapsLink,
+      await ref.set(
+        FavoritePlace(
+          userId: user!.uid,
+          placeId: p.id,
+          title: p.title,
+          imageUrl: p.imageUrl,
+          category: p.category,
+          city: p.city,
+          description: p.description,
+          rating: p.rating,
+          googleMapsLink: p.googleMapsLink,
+        ).toFirestore(),
       );
-
-      await ref.set(fav.toFirestore());
     }
+  }
+
+  Future<void> _openMaps() async {
+    final uri = Uri.parse(widget.place.googleMapsLink);
   }
 
   @override
   Widget build(BuildContext context) {
-    final place = widget.place;
-    final theme = Theme.of(context);
+    final theme = FTheme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.colors.background,
       body: Stack(
         children: [
           CustomScrollView(
+            controller: _scrollController,
             slivers: [
-              _buildAppBar(place),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeaderInfo(place, theme),
-                      const SizedBox(height: 20),
-                      _buildDescription(place, theme),
-                      const SizedBox(height: 24),
-                      _buildReviews(place),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+              _buildAppBar(theme),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 160),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildTitle(theme),
+                    const SizedBox(height: 20),
+                    _buildStats(theme),
+                    const SizedBox(height: 20),
+                    _buildActionRow(theme),
+                    const SizedBox(height: 24),
+                    _buildDivider(theme),
+                    const SizedBox(height: 24),
+                    _buildDescription(theme),
+                    const SizedBox(height: 24),
+                    _buildDivider(theme),
+                    const SizedBox(height: 24),
+                    _buildReviewsSection(theme),
+                  ]),
                 ),
               ),
             ],
           ),
-
-          _buildBottomInput(theme),
+          _buildBottomBar(theme),
         ],
       ),
     );
   }
 
-  Widget _buildAppBar(Place place) {
+  Widget _buildAppBar(FThemeData theme) {
     return SliverAppBar(
-      expandedHeight: 280,
+      expandedHeight: 300,
       pinned: true,
       backgroundColor: Colors.black,
-      leading: _glassBtn(
-        HugeIcons.strokeRoundedArrowLeft01,
-        () => Navigator.pop(context),
+      automaticallyImplyLeading: false,
+      leading: _GlassButton(
+        icon: FIcons.arrowLeft,
+        onTap: () => Navigator.pop(context),
       ),
       actions: [
         StreamBuilder<DocumentSnapshot>(
@@ -125,30 +137,21 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
               .collection('users')
               .doc(user?.uid)
               .collection('favorites')
-              .doc(place.id)
+              .doc(widget.place.id)
               .snapshots(),
           builder: (_, snap) {
             final isFav = snap.data?.exists ?? false;
-
             return Row(
               children: [
-                _glassBtn(
-                  isFav
-                      ? HugeIcons.strokeRoundedFavourite
-                      : HugeIcons.strokeRoundedFavourite,
-                  () => _toggleFavorite(isFav),
-                  color: isFav ? Colors.red : Colors.white,
-                  active: isFav,
+                _GlassButton(
+                  icon: isFav ? FIcons.heartOff : FIcons.heart,
+                  onTap: () => _toggleFavorite(isFav),
+                  tint: isFav ? Colors.red.withValues(alpha: 0.35) : null,
+                  iconColor: isFav ? Colors.red.shade300 : Colors.white,
                 ),
                 const SizedBox(width: 10),
-                _glassBtn(HugeIcons.strokeRoundedMaps, () async {
-                  // final uri = Uri.parse(place.googleMapsLink);
-
-                  // if (await canLaunchUrl(uri)) {
-                  //   await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  // }
-                }),
-                const SizedBox(width: 10),
+                _GlassButton(icon: FIcons.mapPin, onTap: _openMaps),
+                const SizedBox(width: 14),
               ],
             );
           },
@@ -158,17 +161,20 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(place.imageUrl, fit: BoxFit.cover),
-
-            Container(
+            CachedNetworkImage(
+              imageUrl: widget.place.imageUrl,
+              fit: BoxFit.cover,
+            ),
+            DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withValues(alpha: 0.72),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
+                  stops: const [0.4, 1.0],
                 ),
               ),
             ),
@@ -178,66 +184,30 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     );
   }
 
-  Widget _buildHeaderInfo(Place place, ThemeData theme) {
-    final colors = theme.colorScheme;
-
+  Widget _buildTitle(FThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        FBadge(variant: .secondary, child: Text(widget.place.category)),
+        const SizedBox(height: 10),
         Text(
-          place.title,
-          style: theme.textTheme.headlineMedium?.copyWith(
+          widget.place.title,
+          style: theme.typography.xl3.copyWith(
             fontWeight: FontWeight.w800,
-            height: 1.1,
+            color: theme.colors.foreground,
+            height: 1.15,
           ),
         ),
-
-        const SizedBox(height: 14),
-
+        const SizedBox(height: 8),
         Row(
           children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedLocation01,
-              size: 16,
-              color: colors.primary,
-            ),
-
-            const SizedBox(width: 8),
-
+            Icon(FIcons.mapPin, size: 14, color: theme.colors.mutedForeground),
+            const SizedBox(width: 5),
             Text(
-              place.city,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.72),
+              widget.place.city,
+              style: theme.typography.sm.copyWith(
+                color: theme.colors.mutedForeground,
                 fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 18),
-
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            FBadge(child: Text(place.category)),
-
-            FBadge(
-              variant: .secondary,
-              style: const .context(),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const HugeIcon(
-                    icon: HugeIcons.strokeRoundedStar,
-                    size: 14,
-                    color: Colors.amber,
-                  ),
-
-                  const SizedBox(width: 6),
-
-                  Text(place.rating.toStringAsFixed(1)),
-                ],
               ),
             ),
           ],
@@ -246,40 +216,163 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     );
   }
 
-  Widget _buildDescription(Place place, ThemeData theme) {
-    return FCard(
-      mainAxisSize: .max,
-      title: const Text('About this place'),
-      subtitle: Text(place.description),
+  Widget _buildStats(FThemeData theme) {
+    return Row(
+      children: [
+        _StatChip(
+          icon: Icons.star,
+          label: widget.place.rating.toStringAsFixed(1),
+          iconColor: Colors.amber,
+          theme: theme,
+        ),
+        const SizedBox(width: 10),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('reviews')
+              .where('placeId', isEqualTo: widget.place.id)
+              .snapshots(),
+          builder: (_, snap) {
+            final count = snap.data?.docs.length ?? 0;
+            return _StatChip(
+              icon: FIcons.messageSquare,
+              label: '$count reviews',
+              theme: theme,
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildReviews(Place place) {
-    final theme = Theme.of(context);
+  Widget _buildActionRow(FThemeData theme) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .collection('favorites')
+          .doc(widget.place.id)
+          .snapshots(),
+      builder: (_, snap) {
+        final isFav = snap.data?.exists ?? false;
 
+        return Row(
+          children: [
+            Expanded(
+              child: FButton(
+                onPress: _openMaps,
+                variant: .outline,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(FIcons.mapPin, size: 15),
+                    const SizedBox(width: 7),
+                    const Text('Open in Maps'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FButton(
+                onPress: () => _toggleFavorite(isFav),
+                variant: isFav ? .primary : .outline,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isFav ? FIcons.heartOff : FIcons.heart,
+                      size: 15,
+                      color: isFav ? Colors.white : null,
+                    ),
+                    const SizedBox(width: 7),
+                    Text(isFav ? 'Saved' : 'Save'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDescription(FThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Reviews", style: theme.textTheme.titleMedium),
-        const SizedBox(height: 12),
+        Text(
+          'About',
+          style: theme.typography.lg.copyWith(
+            fontWeight: FontWeight.w700,
+            color: theme.colors.foreground,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          widget.place.description,
+          style: TextStyle(color: theme.colors.mutedForeground, height: 1.7),
+        ),
+      ],
+    );
+  }
 
-        StreamBuilder(
+  Widget _buildReviewsSection(FThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reviews',
+          style: theme.typography.lg.copyWith(
+            fontWeight: FontWeight.w700,
+            color: theme.colors.foreground,
+          ),
+        ),
+        const SizedBox(height: 14),
+        StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('reviews')
-              .where('placeId', isEqualTo: place.id)
+              .where('placeId', isEqualTo: widget.place.id)
               .orderBy('date', descending: true)
               .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const CircularProgressIndicator();
+          builder: (_, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colors.foreground,
+                  ),
+                ),
+              );
             }
 
-            final reviews = snapshot.data!.docs
-                .map((e) => Review.fromFirestore(e))
-                .toList();
+            final reviews =
+                snap.data?.docs.map((e) => Review.fromFirestore(e)).toList() ??
+                [];
 
             if (reviews.isEmpty) {
-              return const Text("No reviews yet.");
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    Icon(
+                      FIcons.messageSquare,
+                      size: 36,
+                      color: theme.colors.mutedForeground,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'No reviews yet.\nBe the first to share your experience.',
+                      textAlign: TextAlign.center,
+                      style: theme.typography.sm.copyWith(
+                        color: theme.colors.mutedForeground,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             return Column(
@@ -287,7 +380,7 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                   .map(
                     (r) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _reviewCard(r),
+                      child: _ReviewCard(review: r, theme: theme),
                     ),
                   )
                   .toList(),
@@ -298,190 +391,249 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     );
   }
 
-  Widget _reviewCard(Review r) {
-    final theme = Theme.of(context);
+  Widget _buildDivider(FThemeData theme) =>
+      Divider(height: 1, color: theme.colors.border);
 
-    return FCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 48,
-            width: 48,
+  Widget _buildBottomBar(FThemeData theme) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              color: theme.colors.background.withValues(alpha: 0.88),
+              border: Border(
+                top: BorderSide(color: theme.colors.border, width: 0.8),
+              ),
             ),
-            child: Center(
-              child: Text(
-                r.userName[0].toUpperCase(),
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Your rating:',
+                        style: theme.typography.xs.copyWith(
+                          color: theme.colors.mutedForeground,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Row(
+                        children: List.generate(5, (i) {
+                          final star = i + 1;
+                          final filled = star <= _selectedRating;
+                          return GestureDetector(
+                            onTap: () => setState(
+                              () => _selectedRating = star.toDouble(),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                              ),
+                              child: Icon(
+                                Icons.star,
+                                size: 20,
+                                color: filled
+                                    ? Colors.amber
+                                    : theme.colors.mutedForeground.withValues(
+                                        alpha: 0.4,
+                                      ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: FTextField(
+                          control: .managed(controller: _controller),
+                          hint: 'Share your experience…',
+                          maxLines: 3,
+                          minLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      FButton.icon(
+                        onPress: _addReview,
+                        child: Icon(FIcons.sendHorizontal, size: 17),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
 
-          const SizedBox(width: 14),
+class _GlassButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color? tint;
+  final Color iconColor;
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        r.userName,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+  const _GlassButton({
+    required this.icon,
+    required this.onTap,
+    this.tint,
+    this.iconColor = Colors.white,
+  });
 
-                    Row(
-                      children: List.generate(
-                        r.rating.toInt(),
-                        (i) => const Padding(
-                          padding: EdgeInsets.only(left: 2),
-                          child: HugeIcon(
-                            icon: HugeIcons.strokeRoundedStar,
-                            size: 14,
-                            color: Colors.amber,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: tint ?? Colors.black.withValues(alpha: 0.3),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+                width: 0.8,
+              ),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-                const SizedBox(height: 10),
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? iconColor;
+  final FThemeData theme;
 
-                Text(
-                  r.comment,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.6,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
-                  ),
-                ),
-              ],
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.theme,
+    this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: theme.colors.muted,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: iconColor ?? theme.colors.mutedForeground,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.typography.sm.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colors.foreground,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildBottomInput(ThemeData theme) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: theme.colorScheme.outline.withValues(alpha: 0.08),
-            ),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+class _ReviewCard extends StatelessWidget {
+  final Review review;
+  final FThemeData theme;
+
+  const _ReviewCard({required this.review, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colors.muted.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colors.border, width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colors.foreground.withValues(alpha: 0.08),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  review.userName[0].toUpperCase(),
+                  style: theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colors.foreground,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  review.userName,
+                  style: theme.typography.sm.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colors.foreground,
+                  ),
+                ),
+              ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (i) {
-                  final star = i + 1;
-
-                  return IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedRating = star.toDouble();
-                      });
-                    },
-
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedStar,
-                      color: star <= _selectedRating
-                          ? Colors.amber
-                          : Colors.grey.shade500,
-                      size: 22,
-                    ),
+                  final filled = (i + 1) <= review.rating;
+                  return Icon(
+                    Icons.star,
+                    size: 13,
+                    color: filled
+                        ? Colors.amber
+                        : theme.colors.mutedForeground.withValues(alpha: 0.3),
                   );
                 }),
               ),
-
-              const SizedBox(height: 10),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: FTextField(
-                      control: .managed(controller: _controller),
-                      hint: 'Share your experience...',
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  FButton.icon(
-                    onPress: _addReview,
-
-                    child: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedSent,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(String text, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(text),
-    );
-  }
-
-  Widget _glassBtn(
-    List<List<dynamic>> icon,
-    VoidCallback onTap, {
-    Color color = Colors.white,
-    bool active = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: active
-                  ? Colors.red.withValues(alpha: 0.24)
-                  : Colors.black.withValues(alpha: 0.28),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          const SizedBox(height: 10),
+          Text(
+            review.comment,
+            style: theme.typography.sm.copyWith(
+              color: theme.colors.mutedForeground,
+              height: 1.65,
             ),
-            child: HugeIcon(icon: icon, color: color, size: 20),
           ),
-        ),
+        ],
       ),
     );
   }

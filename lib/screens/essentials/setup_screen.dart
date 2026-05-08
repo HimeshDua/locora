@@ -1,6 +1,4 @@
 import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -59,10 +57,7 @@ class _SetupScreenState extends State<SetupScreen> {
     setState(() => isLoading = true);
 
     try {
-      await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
-      await FirebaseFirestore.instance.collection('users').doc(userId).set({
-        'name': name,
-      }, SetOptions(merge: true));
+      await updateUserDisplayName(name, userId!);
       await saveSelectedCityToFirebase(selectedCity!.name, userId!);
       await saveSelectedCity(selectedCity!);
 
@@ -108,7 +103,6 @@ class _SetupScreenState extends State<SetupScreen> {
             ),
           ),
 
-          // Container(color: Colors.black.withValues(alpha: 0.64)),
           SafeArea(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(28, 16, 28, bottom + 24),
