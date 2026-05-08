@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:locora/utils/themes.dart';
 
 class AuthTextField extends StatefulWidget {
   final String hint;
@@ -8,6 +9,7 @@ class AuthTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String? errorText;
   final TextInputType? inputType;
+  final Function(String)? onChanged;
 
   const AuthTextField({
     super.key,
@@ -15,6 +17,7 @@ class AuthTextField extends StatefulWidget {
     required this.hint,
     required this.icon,
     this.inputType,
+    this.onChanged,
     this.errorText,
     this.obscure = false,
   });
@@ -36,6 +39,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
         setState(() => isFocused = value);
       },
       child: TextField(
+        onChanged: widget.onChanged,
         keyboardType: widget.inputType ?? TextInputType.text,
         controller: widget.controller,
         obscureText: widget.obscure,
@@ -72,7 +76,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           ),
 
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             borderSide: BorderSide.none,
           ),
 

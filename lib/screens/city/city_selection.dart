@@ -7,6 +7,9 @@ import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/utils/persistance.dart';
 import 'package:locora/utils/redirects.dart';
+import 'package:locora/widgets/auth/auth_card.dart';
+import 'package:locora/widgets/auth/auth_shell.dart';
+import 'package:locora/widgets/auth_textfield.dart';
 
 class CitySelectionScreen extends StatefulWidget {
   const CitySelectionScreen({super.key});
@@ -26,52 +29,67 @@ class _CitySelectionScreenState extends State<CitySelectionScreen> {
   List<City> filteredCities = [];
 
   City? selectedCity;
+
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
+
     userId = FirebaseAuth.instance.currentUser?.uid;
+
     redirectBasedOnStoredCity(context);
   }
 
-  void _onCitySearch(String value) {
+  void onCitySearch(String value) {
     setState(() {
       filteredCities = CitySelectionScreen.cities
-          .where((c) => c.name.toLowerCase().contains(value.toLowerCase()))
+          .where(
+            (city) => city.name.toLowerCase().contains(value.toLowerCase()),
+          )
+          .take(6)
           .toList();
     });
   }
 
   Future<void> saveUserName(String name, String uid) async {
     await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'name': name,
+
+    await FirebaseFirestore.instance.collection("users").doc(uid).set({
+      "name": name,
     }, SetOptions(merge: true));
   }
 
-  Future<void> _submit() async {
+  Future<void> submit() async {
     if (userId == null ||
         selectedCity == null ||
         nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please complete all fields")),
       );
+
       return;
     }
 
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       await saveUserName(nameController.text.trim(), userId!);
+
       await saveSelectedCityToFirebase(selectedCity!.name, userId!);
+
       await saveSelectedCity(selectedCity!);
 
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
+      if (!mounted) return;
+
+      Navigator.of(context).pushNamedAndRemoveUntil("/", (_) => false);
+    } catch (_) {
+      setState(() {
+        isLoading = false;
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Something went wrong")));
@@ -81,179 +99,254 @@ class _CitySelectionScreenState extends State<CitySelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset("assets/greenery.jpeg", fit: BoxFit.cover),
-          ),
-
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.55)),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+    return AuthShell(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: AuthCard(
+              // padding: const EdgeInsets.all(28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Spacer(),
+                  Container(
+                    height: 72,
+                    width: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.primary.withValues(alpha: 0.12),
+                    ),
+                    child: Center(
+                      child: HugeIcon(
+                        icon: HugeIcons.strokeRoundedLocation01,
+                        color: colors.primary,
+                        size: 34,
+                      ),
+                    ),
+                  ),
 
-                  /// TITLE
+                  const SizedBox(height: 28),
+
                   Text(
-                    "Welcome to Locora 👋",
+                    "Personalize your journey",
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
                   Text(
-                    "Let’s personalize your experience",
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    "Choose your city and tell us your name so Locora can personalize recommendations for you.",
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.white70,
+                      height: 1.6,
                     ),
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 36),
 
-                  _inputField(
+                  AuthTextField(
                     controller: nameController,
-                    hint: "Your Name",
+                    hint: "Your name",
                     icon: HugeIcons.strokeRoundedUser,
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
 
-                  _inputField(
+                  AuthTextField(
                     controller: cityController,
-                    hint: "Search your city...",
-                    icon: HugeIcons.strokeRoundedLocation01,
-                    onChanged: _onCitySearch,
+                    hint: "Search your city",
+                    icon: HugeIcons.strokeRoundedMapsLocation01,
+                    onChanged: onCitySearch,
                   ),
 
                   if (cityController.text.isNotEmpty) _suggestionsBox(theme),
 
-                  const SizedBox(height: 20),
+                  if (selectedCity != null) ...[
+                    const SizedBox(height: 20),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                            color: colors.primary,
+                            size: 22,
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Text(
+                              selectedCity!.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 30),
 
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _submit,
+                      onPressed: isLoading ? null : submit,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: theme.colorScheme.primary,
+                        elevation: 0,
+                        backgroundColor: colors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
                       child: isLoading
-                          ? SizedBox(
-                              height: 18,
-                              width: 18,
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: theme.colorScheme.secondary,
+                                color: Colors.white,
                               ),
                             )
-                          : Text(
-                              "Continue",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.secondary,
-                              ),
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  "Continue",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 10),
+
+                                const HugeIcon(
+                                  icon: HugeIcons.strokeRoundedArrowRight01,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
                             ),
                     ),
                   ),
-
-                  const Spacer(),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _inputField({
-    required TextEditingController controller,
-    required String hint,
-    required List<List<dynamic>> icon,
-    Function(String)? onChanged,
-  }) {
-    final theme = Theme.of(context);
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      style: TextStyle(color: theme.colorScheme.secondary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: theme.hintColor),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14.0),
-          child: HugeIcon(icon: icon, color: theme.secondaryHeaderColor),
-        ),
-        filled: true,
-        focusColor: theme.focusColor,
-        fillColor: theme.highlightColor,
-        hoverColor: theme.hoverColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
         ),
       ),
     );
   }
 
-  /// ================= SUGGESTIONS =================
   Widget _suggestionsBox(ThemeData theme) {
+    final colors = theme.colorScheme;
+
     if (filteredCities.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.only(top: 14),
         child: Text(
-          "No cities found",
-          style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+          "No matching cities found",
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
         ),
       );
     }
 
     return Container(
-      margin: const EdgeInsets.only(top: 10),
+      margin: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
-      child: ListView.builder(
+      child: ListView.separated(
         shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: filteredCities.length,
-        itemBuilder: (_, i) {
-          final city = filteredCities[i];
+        separatorBuilder: (_, __) =>
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
+        itemBuilder: (_, index) {
+          final city = filteredCities[index];
+
           final isSelected = selectedCity?.name == city.name;
 
-          return ListTile(
+          return InkWell(
+            borderRadius: BorderRadius.circular(18),
             onTap: () {
               setState(() {
                 selectedCity = city;
+
                 cityController.text = city.name;
+
                 filteredCities = [];
               });
             },
-            leading: HugeIcon(
-              icon: HugeIcons.strokeRoundedCity03,
-              color: isSelected ? theme.colorScheme.primary : Colors.white70,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Row(
+                children: [
+                  Container(
+                    height: 42,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.primary.withValues(alpha: 0.12),
+                    ),
+                    child: Center(
+                      child: HugeIcon(
+                        icon: HugeIcons.strokeRoundedCity03,
+                        color: colors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 14),
+
+                  Expanded(
+                    child: Text(
+                      city.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+
+                  if (isSelected)
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                      color: colors.primary,
+                      size: 20,
+                    ),
+                ],
+              ),
             ),
-            title: Text(city.name, style: const TextStyle(color: Colors.white)),
-            trailing: isSelected
-                ? HugeIcon(
-                    icon: HugeIcons.strokeRoundedCheckmarkSquare02,
-                    color: theme.colorScheme.primary,
-                  )
-                : null,
           );
         },
       ),

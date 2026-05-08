@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/city/city_selection.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';
-import 'package:locora/screens/essentials/on_boarding.dart';
+import 'package:locora/screens/essentials/onboarding.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/persistance.dart';
 

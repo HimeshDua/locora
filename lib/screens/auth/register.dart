@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,8 @@ import 'package:locora/data/cities.dart';
 import 'package:locora/utils/is_indicators.dart';
 import 'package:locora/utils/persistance.dart';
 import 'package:locora/utils/redirects.dart';
+import 'package:locora/widgets/auth/auth_card.dart';
+import 'package:locora/widgets/auth/auth_shell.dart';
 import 'package:locora/widgets/auth_textfield.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -118,90 +119,113 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset('assets/greenery.jpeg', fit: BoxFit.cover),
-          ),
-
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withValues(alpha: 0.3),
-                    colors.primary.withValues(alpha: 0.2),
-                    Colors.black.withValues(alpha: 0.4),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ),
-
-          /// Soft Blur
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-              child: const SizedBox(),
-            ),
-          ),
-
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: colors.surface.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: colors.outline.withValues(alpha: 0.2),
+    return AuthShell(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: AuthCard(
+              // padding: const EdgeInsets.all(28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// ICON
+                  Container(
+                    height: 72,
+                    width: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.primary.withValues(alpha: 0.12),
+                    ),
+                    child: Center(
+                      child: HugeIcon(
+                        icon: HugeIcons.strokeRoundedUserAdd01,
+                        color: colors.primary,
+                        size: 34,
+                      ),
                     ),
                   ),
 
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Join Locora",
-                        style: text.headlineLarge?.copyWith(
-                          color: colors.primary,
-                          fontSize: 32,
-                        ),
+                  const SizedBox(height: 28),
+
+                  /// TITLE
+                  Text(
+                    "Create account",
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    "Start discovering cities, attractions, restaurants, and unforgettable experiences with Locora.",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.white70,
+                      height: 1.6,
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  /// FULL NAME
+                  AuthTextField(
+                    hint: "Full name",
+                    icon: HugeIcons.strokeRoundedUser,
+                    controller: nameController,
+                    errorText: nameError,
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// CITY SELECTOR
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
                       ),
-
-                      const SizedBox(height: 24),
-
-                      AuthTextField(
-                        hint: "Full Name",
-                        icon: HugeIcons.strokeRoundedUser,
-                        controller: nameController,
-                        errorText: nameError,
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      DropdownButton<String>(
-                        hint: Text('Select your city'),
-                        items: pakistaniCities
-                            .map(
-                              (city) => DropdownMenuItem<String>(
-                                value: city.name,
-                                child: Text(city.name),
-                              ),
-                            )
-                            .toList(),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        dropdownColor: const Color(0xFF1B1B1B),
+                        borderRadius: BorderRadius.circular(20),
+                        isExpanded: true,
                         value: selectedCity,
+                        hint: Text(
+                          "Select your city",
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedArrowDown01,
+                          color: Colors.white70,
+                          size: 18,
+                        ),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        items: pakistaniCities.map((city) {
+                          return DropdownMenuItem<String>(
+                            value: city.name,
+                            child: Text(city.name),
+                          );
+                        }).toList(),
                         onChanged: (String? city) {
                           setState(() {
                             selectedCity = city;
+
                             final selectedCityObject = pakistaniCities
                                 .firstWhere(
                                   (c) => c.name == city,
@@ -212,228 +236,155 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           });
                         },
                       ),
+                    ),
+                  ),
 
-                      AuthTextField(
-                        hint: "Email",
-                        icon: HugeIcons.strokeRoundedMail01,
-                        controller: emailController,
-                        errorText: emailError,
+                  const SizedBox(height: 18),
+
+                  /// EMAIL
+                  AuthTextField(
+                    hint: "Email address",
+                    icon: HugeIcons.strokeRoundedMail01,
+                    controller: emailController,
+                    errorText: emailError,
+                    inputType: TextInputType.emailAddress,
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// PASSWORD
+                  AuthTextField(
+                    hint: "Password",
+                    icon: HugeIcons.strokeRoundedLock,
+                    obscure: true,
+                    controller: passwordController,
+                    errorText: passwordError,
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  /// CONFIRM PASSWORD
+                  AuthTextField(
+                    hint: "Confirm password",
+                    icon: HugeIcons.strokeRoundedLockPassword,
+                    obscure: true,
+                    controller: confirmPasswordController,
+                    errorText: confirmPasswordError,
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  /// CREATE ACCOUNT BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : register,
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: colors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-
-                      const SizedBox(height: 14),
-
-                      AuthTextField(
-                        hint: "Password",
-                        icon: HugeIcons.strokeRoundedLock,
-                        obscure: true,
-                        controller: passwordController,
-                        errorText: passwordError,
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      AuthTextField(
-                        hint: "Confirm Password",
-                        icon: HugeIcons.strokeRoundedLock,
-                        obscure: true,
-                        controller: confirmPasswordController,
-                        errorText: confirmPasswordError,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => {register()},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  "Create account",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
                                   ),
-                                )
-                              : const Text("Create Account"),
+                                ),
+
+                                const SizedBox(width: 10),
+
+                                const HugeIcon(
+                                  icon: HugeIcons.strokeRoundedArrowRight01,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  /// DIVIDER
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white.withValues(alpha: 0.12),
                         ),
                       ),
 
-                      const SizedBox(height: 16),
-
-                      Center(
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const LoginScreen(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            "Already have an account? Login",
-                            style: text.bodyMedium,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          "ALREADY REGISTERED?",
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white54,
+                            letterSpacing: 1.2,
                           ),
+                        ),
+                      ),
+
+                      Expanded(
+                        child: Divider(
+                          color: Colors.white.withValues(alpha: 0.12),
                         ),
                       ),
                     ],
                   ),
-                ),
+
+                  const SizedBox(height: 24),
+
+                  /// LOGIN BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        "Login instead",
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-
-          // SafeArea(
-          //   child: Center(
-          //     child: SingleChildScrollView(
-          //       padding: const EdgeInsets.symmetric(horizontal: 20),
-          //       child: Container(
-          //         padding: const EdgeInsets.all(24),
-          //         decoration: BoxDecoration(
-          //           color: colors.surface.withValues(alpha: 0.85),
-          //           borderRadius: BorderRadius.circular(24),
-          //           border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
-          //         ),
-
-          //         child: Column(
-          //           crossAxisAlignment: CrossAxisAlignment.start,
-          //           children: [
-          //             Text(
-          //               "Join Locora",
-          //               style: text.headlineLarge?.copyWith(
-          //                 color: colors.primary,
-          //                 fontSize: 32,
-          //               ),
-          //             ),
-
-          //             const SizedBox(height: 6),
-
-          //             Text(
-          //               "Create an account to explore your city",
-          //               style: text.bodyMedium?.copyWith(
-          //                 color: colors.onSurface.withValues(alpha: 0.7),
-          //               ),
-          //             ),
-
-          //             const SizedBox(height: 24),
-
-          //             const AuthTextField(
-          //               hint: "Full Name",
-          //               icon: HugeIcons.strokeRoundedUser,
-          //             ),
-
-          //             const SizedBox(height: 14),
-
-          //             const AuthTextField(
-          //               hint: "Email",
-          //               icon: HugeIcons.strokeRoundedMail01,
-          //             ),
-
-          //             const SizedBox(height: 14),
-
-          //             const AuthTextField(
-          //               hint: "Password",
-          //               icon: HugeIcons.strokeRoundedLock,
-          //               obscure: true,
-          //             ),
-
-          //             const SizedBox(height: 14),
-
-          //             const AuthTextField(
-          //               hint: "Confirm Password",
-          //               icon: HugeIcons.strokeRoundedLock,
-          //               obscure: true,
-          //             ),
-
-          //             const SizedBox(height: 20),
-
-          //             SizedBox(
-          //               width: double.infinity,
-          //               child: ElevatedButton(
-          //                 onPressed: () {},
-          //                 style: ElevatedButton.styleFrom(
-          //                   elevation: 0,
-          //                   backgroundColor: colors.primary,
-          //                   foregroundColor: Colors.white,
-          //                   padding: const EdgeInsets.symmetric(vertical: 16),
-          //                   shape: RoundedRectangleBorder(
-          //                     borderRadius: BorderRadius.circular(16),
-          //                   ),
-          //                 ),
-          //                 child: const Text(
-          //                   "Create Account",
-          //                   style: TextStyle(fontSize: 16),
-          //                 ),
-          //               ),
-          //             ),
-
-          //             const SizedBox(height: 16),
-
-          //             Text(
-          //               "By signing up, you agree to our Terms & Privacy Policy",
-          //               style: text.bodySmall?.copyWith(
-          //                 color: colors.onSurface.withValues(alpha: 0.6),
-          //               ),
-          //             ),
-
-          //             const SizedBox(height: 16),
-
-          //             Row(
-          //               children: [
-          //                 Expanded(child: Divider(color: colors.outline)),
-          //                 Padding(
-          //                   padding: const EdgeInsets.symmetric(horizontal: 8),
-          //                   child: Text("OR", style: text.bodySmall),
-          //                 ),
-          //                 Expanded(child: Divider(color: colors.outline)),
-          //               ],
-          //             ),
-
-          //             const SizedBox(height: 16),
-
-          //             Center(
-          //               child: TextButton(
-          //                 onPressed: () {
-          //                   Navigator.pushReplacement(
-          //                     context,
-          //                     MaterialPageRoute(
-          //                       builder: (_) => const LoginScreen(),
-          //                     ),
-          //                   );
-          //                 },
-          //                 child: Text.rich(
-          //                   TextSpan(
-          //                     text: "Already have an account? ",
-          //                     style: text.bodyMedium,
-          //                     children: [
-          //                       TextSpan(
-          //                         text: "Login",
-          //                         style: TextStyle(
-          //                           color: colors.primary,
-          //                           fontWeight: FontWeight.w600,
-          //                         ),
-          //                       ),
-          //                     ],
-          //                   ),
-          //                 ),
-          //               ),
-          //             ),
-          //           ],
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-        ],
+        ),
       ),
     );
   }
