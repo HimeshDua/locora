@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/auth/register.dart';
-import 'package:locora/screens/city/city_selection.dart';
+import 'package:locora/screens/essentials/setup_screen.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';
 import 'package:locora/utils/persistance.dart';
 
@@ -30,7 +31,7 @@ void redirectBasedOnAuthnCity(BuildContext context) async {
   } else {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => CitySelectionScreen()),
+      MaterialPageRoute(builder: (_) => SetupScreen()),
     );
   }
 }
@@ -42,6 +43,17 @@ void redirectAfterLogout(BuildContext context) async {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => RegisterScreen()),
+    );
+  }
+}
+
+void redirectToLogin(BuildContext context) async {
+  final auth = FirebaseAuth.instance.currentUser;
+  if (!context.mounted) return;
+  if (auth == null) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
   }
 }

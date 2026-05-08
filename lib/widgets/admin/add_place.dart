@@ -236,7 +236,7 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
           color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
         child: ClipRRect(
@@ -324,7 +324,7 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -436,7 +436,7 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withOpacity(0.15),
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -477,7 +477,7 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
         color: theme.colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
         ),
       ),

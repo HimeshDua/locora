@@ -20,7 +20,10 @@ class AuthShell extends StatelessWidget {
                 gradient: RadialGradient(
                   center: const Alignment(0.6, -0.8),
                   radius: 1.2,
-                  colors: [colors.primary.withOpacity(0.06), colors.surface],
+                  colors: [
+                    colors.primary.withValues(alpha: 0.06),
+                    colors.surface,
+                  ],
                 ),
               ),
             ),
@@ -37,7 +40,7 @@ class AuthShell extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    colors.tertiary.withOpacity(0.07),
+                    colors.tertiary.withValues(alpha: 0.07),
                     Colors.transparent,
                   ],
                 ),

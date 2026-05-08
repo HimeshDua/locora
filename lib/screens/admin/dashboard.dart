@@ -52,7 +52,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           indicatorSize: TabBarIndicatorSize.label,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelColor: colorScheme.onSurfaceVariant.withOpacity(0.6),
+          unselectedLabelColor: colorScheme.onSurfaceVariant.withValues(
+            alpha: 0.6,
+          ),
           tabs: const [
             Tab(text: "Overview"),
             Tab(text: "Manage Places"),
@@ -173,7 +175,7 @@ class _OverviewTab extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -182,7 +184,7 @@ class _OverviewTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.1),
+              color: accent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: HugeIcon(icon: icon, color: accent, size: 20),

@@ -1,17 +1,16 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:locora/screens/auth/login.dart';
+import 'package:forui/forui.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/utils/is_indicators.dart';
 import 'package:locora/utils/persistance.dart';
 import 'package:locora/utils/redirects.dart';
-import 'package:locora/widgets/auth/auth_card.dart';
-import 'package:locora/widgets/auth/auth_shell.dart';
-import 'package:locora/widgets/auth_textfield.dart';
-import 'package:hugeicons/hugeicons.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,364 +26,388 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final cityController = FSelectController<String>();
+
+  late final String _bgImage;
   String? selectedCity;
-
-  String? nameError;
-  String? emailError;
-  String? passwordError;
-  String? confirmPasswordError;
-
   bool isLoading = false;
 
-  bool validate() {
-    setState(() {
-      nameError = nameController.text.isEmpty ? "Name is required" : null;
-
-      emailError = !RegExp(r'\S+@\S+\.\S+').hasMatch(emailController.text)
-          ? "Enter a valid email"
-          : null;
-
-      passwordError = passwordController.text.length < 6
-          ? "Password must be at least 6 characters"
-          : null;
-
-      confirmPasswordError =
-          passwordController.text != confirmPasswordController.text
-          ? "Passwords do not match"
-          : null;
-    });
-
-    if (selectedCity == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please select a city")));
-      return false;
-    }
-
-    return nameError == null &&
-        emailError == null &&
-        passwordError == null &&
-        confirmPasswordError == null;
+  @override
+  void initState() {
+    super.initState();
+    final n = Random().nextInt(5) + 1;
+    _bgImage = 'assets/onboarding/$n.jpeg';
   }
 
-  Future<void> register() async {
-    String name = nameController.text.trim();
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    cityController.dispose();
+    super.dispose();
+  }
 
-    if (!validate()) return;
+  Future<void> _register() async {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    if (name.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty ||
+        selectedCity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please complete all fields')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      return;
+    }
 
     setState(() => isLoading = true);
 
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: email,
+        password: password,
       );
 
       final user = credential.user;
-      if (user == null) throw Exception("User creation failed");
+      if (user == null) throw Exception('User creation failed');
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        "uid": user.uid,
-        "name": name,
-        "city": selectedCity,
-        "email": emailController.text.trim(),
-        "createdAt": FieldValue.serverTimestamp(),
-        "admin": isAdmin(emailController.text.trim()) || false,
+        'uid': user.uid,
+        'name': name,
+        'city': selectedCity,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+        'admin': isAdmin(email) || false,
       });
 
       await user.updateDisplayName(name);
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Account created successfully")));
+      final city = pakistaniCities.firstWhere((c) => c.name == selectedCity);
+      await saveSelectedCity(city);
+
       redirectBasedOnAuthnCity(context);
     } on FirebaseAuthException catch (e) {
-      String message = "Something went wrong";
-
-      if (e.code == 'email-already-in-use') {
-        message = "Email already in use";
-      } else if (e.code == 'invalid-email') {
-        message = "Invalid email";
-      } else if (e.code == 'weak-password') {
-        message = "Password is too weak";
-      }
-
+      final message = switch (e.code) {
+        'email-already-in-use' => 'Email already in use',
+        'invalid-email' => 'Invalid email',
+        'weak-password' => 'Password is too weak',
+        _ => 'Something went wrong',
+      };
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final size = MediaQuery.sizeOf(context);
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    final theme = FTheme.of(context);
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            _bgImage,
+            fit: BoxFit.cover,
+            width: size.width,
+            height: size.height,
+          ),
 
-    return AuthShell(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: AuthCard(
-              // padding: const EdgeInsets.all(28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// ICON
-                  Container(
-                    height: 72,
-                    width: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: colors.primary.withValues(alpha: 0.12),
-                    ),
-                    child: Center(
-                      child: HugeIcon(
-                        icon: HugeIcons.strokeRoundedUserAdd01,
-                        color: colors.primary,
-                        size: 34,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  /// TITLE
-                  Text(
-                    "Create account",
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    "Start discovering cities, attractions, restaurants, and unforgettable experiences with Locora.",
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white70,
-                      height: 1.6,
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  /// FULL NAME
-                  AuthTextField(
-                    hint: "Full name",
-                    icon: HugeIcons.strokeRoundedUser,
-                    controller: nameController,
-                    errorText: nameError,
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  /// CITY SELECTOR
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        dropdownColor: const Color(0xFF1B1B1B),
-                        borderRadius: BorderRadius.circular(20),
-                        isExpanded: true,
-                        value: selectedCity,
-                        hint: Text(
-                          "Select your city",
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        icon: HugeIcon(
-                          icon: HugeIcons.strokeRoundedArrowDown01,
-                          color: Colors.white70,
-                          size: 18,
-                        ),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        items: pakistaniCities.map((city) {
-                          return DropdownMenuItem<String>(
-                            value: city.name,
-                            child: Text(city.name),
-                          );
-                        }).toList(),
-                        onChanged: (String? city) {
-                          setState(() {
-                            selectedCity = city;
-
-                            final selectedCityObject = pakistaniCities
-                                .firstWhere(
-                                  (c) => c.name == city,
-                                  orElse: () => pakistaniCities.first,
-                                );
-
-                            saveSelectedCity(selectedCityObject);
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  /// EMAIL
-                  AuthTextField(
-                    hint: "Email address",
-                    icon: HugeIcons.strokeRoundedMail01,
-                    controller: emailController,
-                    errorText: emailError,
-                    inputType: TextInputType.emailAddress,
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  /// PASSWORD
-                  AuthTextField(
-                    hint: "Password",
-                    icon: HugeIcons.strokeRoundedLock,
-                    obscure: true,
-                    controller: passwordController,
-                    errorText: passwordError,
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  /// CONFIRM PASSWORD
-                  AuthTextField(
-                    hint: "Confirm password",
-                    icon: HugeIcons.strokeRoundedLockPassword,
-                    obscure: true,
-                    controller: confirmPasswordController,
-                    errorText: confirmPasswordError,
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  /// CREATE ACCOUNT BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : register,
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: colors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  "Create account",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  ),
-                                ),
-
-                                const SizedBox(width: 10),
-
-                                const HugeIcon(
-                                  icon: HugeIcons.strokeRoundedArrowRight01,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  /// DIVIDER
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.white.withValues(alpha: 0.12),
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text(
-                          "ALREADY REGISTERED?",
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white54,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-
-                      Expanded(
-                        child: Divider(
-                          color: Colors.white.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /// LOGIN BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.14),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text(
-                        "Login instead",
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
+          DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.0, 0.45, 1.0],
+                colors: [
+                  Color.fromARGB(64, 0, 0, 0),
+                  Color.fromARGB(153, 0, 0, 0),
+                  Color.fromARGB(155, 0, 0, 0),
                 ],
               ),
             ),
           ),
-        ),
+
+          // Container(color: Colors.black.withValues(alpha: 0.64)),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(28, 16, 28, bottom + 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedArrowLeft01,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Image.network(
+                          'assets/icon/locora.png',
+                          width: 24,
+                          height: 24,
+                        ),
+                        const SizedBox(width: 7),
+                        const Text(
+                          'Locora',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    const Text(
+                      'Create account.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      'Join Locora and start discovering Pakistan.',
+                      style: TextStyle(
+                        color: theme.colors.foreground.withAlpha(1200),
+                        fontSize: 15,
+                        height: 1.55,
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    FTextFormField(
+                      label: Text(
+                        'Full name',
+                        style: TextStyle(color: theme.colors.mutedForeground),
+                      ),
+                      control: .managed(controller: nameController),
+                      hint: 'e.g. Sara Khan',
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      prefixBuilder: (context, value, child) => Padding(
+                        padding: const EdgeInsets.only(left: 14),
+                        child: HugeIcon(
+                          icon: HugeIcons.strokeRoundedUser,
+                          color: Colors.white.withValues(alpha: 0.45),
+                          size: 17,
+                        ),
+                      ),
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    FSelect<String>.search(
+                      label: Text(
+                        'Your City',
+                        style: TextStyle(color: theme.colors.mutedForeground),
+                      ),
+                      control: .managed(
+                        controller: cityController,
+                        onChange: (value) =>
+                            setState(() => selectedCity = value),
+                      ),
+                      hint: 'Search city',
+                      clearable: true,
+                      contentScrollHandles: true,
+                      items: {
+                        for (final city in pakistaniCities)
+                          city.name: city.name,
+                      },
+                      filter: (query) {
+                        if (query.isEmpty) {
+                          return pakistaniCities.map((e) => e.name);
+                        }
+                        return pakistaniCities
+                            .map((e) => e.name)
+                            .where(
+                              (c) =>
+                                  c.toLowerCase().contains(query.toLowerCase()),
+                            );
+                      },
+                      validator: (v) =>
+                          v == null ? 'Please select a city' : null,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    FTextFormField.email(
+                      label: Text(
+                        'Email',
+                        style: TextStyle(color: theme.colors.mutedForeground),
+                      ),
+                      control: .managed(controller: emailController),
+                      hint: 'you@example.com',
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      prefixBuilder: (context, value, child) => Padding(
+                        padding: const EdgeInsets.only(left: 14),
+                        child: HugeIcon(
+                          icon: HugeIcons.strokeRoundedMail01,
+                          color: Colors.white.withValues(alpha: 0.45),
+                          size: 17,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Email is required';
+                        }
+                        if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
+                          return 'Enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    FTextFormField.password(
+                      label: Text(
+                        'Password',
+                        style: TextStyle(color: theme.colors.mutedForeground),
+                      ),
+                      control: .managed(controller: passwordController),
+                      hint: 'Minimum 6 characters',
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        if (value.length < 6) return 'Minimum 6 characters';
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    FTextFormField.password(
+                      label: Text(
+                        'Confirm Password',
+                        style: TextStyle(color: theme.colors.mutedForeground),
+                      ),
+                      control: .managed(controller: confirmPasswordController),
+                      hint: 'Re-enter your password',
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FButton(
+                        onPress: isLoading ? null : _register,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isLoading)
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: theme.colors.muted,
+                                ),
+                              )
+                            else ...[
+                              Text(
+                                'Create account',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
+                                  color: theme.colors.muted,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              HugeIcon(
+                                icon: HugeIcons.strokeRoundedArrowRight01,
+                                color: theme.colors.muted,
+                                size: 18,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    Row(
+                      children: [
+                        Expanded(child: FDivider()),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text(
+                            'HAVE AN ACCOUNT?',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: theme.colors.mutedForeground,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: FDivider()),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    FButton(
+                      variant: .outline,
+                      onPress: () => redirectToLogin(context),
+                      child: Text('Sign in instead'),
+                    ),
+
+                    SizedBox(height: bottom + 8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -89,7 +89,9 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
                 )
               : null,
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.4,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -148,7 +150,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
           ),
         ),
         child: InkWell(
@@ -250,7 +252,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:locora/screens/auth/login.dart';
-import 'package:locora/screens/city/city_selection.dart';
+import 'package:locora/screens/essentials/setup_screen.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';
 import 'package:locora/screens/essentials/onboarding.dart';
 import 'package:locora/types/index.dart';
@@ -54,7 +54,7 @@ class AuthGate extends StatelessWidget {
                   final userDoc = userSnapshot.data;
 
                   if (userDoc == null || !userDoc.exists) {
-                    return const CitySelectionScreen();
+                    return const SetupScreen();
                   }
 
                   final data = userDoc.data() as Map<String, dynamic>;
@@ -63,7 +63,7 @@ class AuthGate extends StatelessWidget {
                   final bool admin = data["admin"] ?? false;
 
                   if (city.isEmpty) {
-                    return const CitySelectionScreen();
+                    return const SetupScreen();
                   }
 
                   return FutureBuilder<City?>(

@@ -77,7 +77,9 @@ class _HomeTabState extends State<HomeTab> {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.5,
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: TextField(
@@ -193,7 +195,7 @@ class _HomeTabState extends State<HomeTab> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -217,7 +219,7 @@ class _HomeTabState extends State<HomeTab> {
                     gradient: LinearGradient(
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.6),
+                        Colors.black.withValues(alpha: 0.6),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -272,7 +274,7 @@ class _HomeTabState extends State<HomeTab> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.9),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

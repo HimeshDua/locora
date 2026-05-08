@@ -22,6 +22,8 @@ dependencies:
   google_maps_flutter: ^2.6.0
   geolocator: ^10.0.0
   random_avatar: ^0.0.8
+  forui_assets: ^0.21.0
+  forui: ^0.21.3
 
 dev_dependencies:
   flutter_test:
@@ -39,4 +41,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/onboarding/
     - assets/images/

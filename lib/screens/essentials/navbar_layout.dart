@@ -51,11 +51,11 @@ class _NavbarLayoutState extends State<NavbarLayout> {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withOpacity(0.9),
+              color: theme.colorScheme.surface.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -94,7 +94,7 @@ class _NavbarLayoutState extends State<NavbarLayout> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: selected
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.12)
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
