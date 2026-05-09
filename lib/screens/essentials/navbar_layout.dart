@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/main.dart';
 import 'package:locora/screens/admin/dashboard.dart';
@@ -23,7 +25,7 @@ class _NavbarLayoutState extends State<NavbarLayout> {
   int currentIndex = 0;
   final defaultCity = pakistaniCities[0];
 
-  late final List<Widget> pages = [
+  List<Widget> get pages => [
     HomeTab(city: widget.city),
     if (widget.admin == true) const AdminDashboardScreen(),
     MapTabWrapper(city: widget.city ?? defaultCity),
@@ -36,37 +38,59 @@ class _NavbarLayoutState extends State<NavbarLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme = FTheme.of(context);
     final safeIndex = currentIndex >= pages.length ? 0 : currentIndex;
 
     return Scaffold(
+      // Extend body behind the navbar for the glass effect to work
+      extendBody: true,
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.02),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
         child: KeyedSubtree(
           key: ValueKey(safeIndex),
           child: SizedBox.expand(child: pages[safeIndex]),
         ),
       ),
+      bottomNavigationBar: _buildBottomBar(theme),
+    );
+  }
 
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Container(
-            height: 70,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+  Widget _buildBottomBar(FThemeData theme) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: theme.colors.background.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: theme.colors.border.withValues(alpha: 0.5),
+                  width: 1,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: _buildItems(),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: _buildItems(theme),
+              ),
             ),
           ),
         ),
@@ -74,57 +98,61 @@ class _NavbarLayoutState extends State<NavbarLayout> {
     );
   }
 
-  List<Widget> _buildItems() {
-    final items = [
-      _NavItem(icon: HugeIcons.strokeRoundedHome01, label: "Home"),
+  List<Widget> _buildItems(FThemeData theme) {
+    final List<_NavItem> items = [
+      _NavItem(icon: FIcons.house, label: "Home"),
       if (widget.admin == true)
-        _NavItem(
-          icon: HugeIcons.strokeRoundedDashboardSquare01,
-          label: "Admin",
-        ),
-      _NavItem(icon: HugeIcons.strokeRoundedMaps, label: "Map"),
-      _NavItem(icon: HugeIcons.strokeRoundedFavourite, label: "Favs"),
-      _NavItem(icon: HugeIcons.strokeRoundedUser, label: "Profile"),
+        _NavItem(icon: FIcons.layoutDashboard, label: "Admin"),
+      _NavItem(icon: FIcons.map, label: "Map"),
+      _NavItem(icon: FIcons.heart, label: "Favs"),
+      _NavItem(icon: FIcons.user, label: "Profile"),
     ];
 
     return List.generate(items.length, (index) {
-      final selected = currentIndex == index;
+      final isSelected = currentIndex == index;
 
       return GestureDetector(
-        onTap: () => setState(() => currentIndex = index),
+        onTap: () {
+          HapticFeedback.selectionClick(); // UX: Physical feel
+          setState(() => currentIndex = index);
+        },
+        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: selected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
+            color: isSelected
+                ? theme.colors.primary.withValues(alpha: 0.1)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Column(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              HugeIcon(
-                icon: items[index].icon,
-                size: 22,
-                color: selected
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.grey,
+              Icon(
+                items[index].icon,
+                size: 20,
+                color: isSelected
+                    ? theme.colors.primary
+                    : theme.colors.mutedForeground,
               ),
-              const SizedBox(height: 4),
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: 1,
-                child: Text(
-                  items[index].label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey,
-                  ),
-                ),
+
+              // Only show label for selected item for a clean "Pill" look
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                child: isSelected
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          items[index].label,
+                          style: theme.typography.xs.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colors.primary,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ],
           ),
@@ -135,7 +163,7 @@ class _NavbarLayoutState extends State<NavbarLayout> {
 }
 
 class _NavItem {
-  final dynamic icon;
+  final IconData icon;
   final String label;
 
   _NavItem({required this.icon, required this.label});

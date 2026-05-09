@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:locora/types/index.dart';
+import 'package:locora/utils/redirects.dart';
 
 Future<void> saveSelectedCityToFirebase(String cityName, String? uid) async {
   if (uid != null) {
@@ -27,6 +29,7 @@ Future<void> addReview({
         'userName': userName,
         'comment': comment,
         'rating': rating,
+        'hidden': false,
         'date': FieldValue.serverTimestamp(),
       });
 }
@@ -45,4 +48,9 @@ Future updateUserDisplayName(String name, String userId) async {
   await FirebaseFirestore.instance.collection('users').doc(userId).set({
     'name': name,
   }, SetOptions(merge: true));
+}
+
+void logoutUser(BuildContext context) {
+  FirebaseAuth.instance.signOut();
+  redirectAfterLogout(context);
 }

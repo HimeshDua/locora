@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -81,7 +82,7 @@ class _SetupScreenState extends State<SetupScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
+          Image.asset(
             _bgImage,
             fit: BoxFit.cover,
             width: size.width,
@@ -122,8 +123,8 @@ class _SetupScreenState extends State<SetupScreen> {
                           ),
                         ),
                         const SizedBox(width: 14),
-                        Image.network(
-                          'assets/icon/locora.png',
+                        CachedNetworkImage(
+                          imageUrl: 'assets/icon/locora.png',
                           width: 24,
                           height: 24,
                         ),

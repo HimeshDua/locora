@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:locora/screens/admin/manage_places.dart';
-import 'package:locora/widgets/admin/add_place.dart';
+import 'package:locora/widgets/admin/add_or_edit_place.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -33,7 +33,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: FTheme.of(context).colors.background,
-      builder: (_) => const AddPlaceSheet(),
+      builder: (_) => const AddOrEditPlaceSheet(),
     );
   }
 

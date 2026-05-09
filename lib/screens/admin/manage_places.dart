@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:locora/types/index.dart';
-import 'package:locora/widgets/admin/add_place.dart';
+import 'package:locora/widgets/admin/add_or_edit_place.dart';
 
 class ManagePlacesScreen extends StatefulWidget {
   const ManagePlacesScreen({super.key});
@@ -65,7 +65,7 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: FTheme.of(context).colors.background,
-      builder: (_) => AddPlaceSheet(docId: p.id, existingData: p),
+      builder: (_) => AddOrEditPlaceSheet(docId: p.id, existingData: p),
     );
   }
 

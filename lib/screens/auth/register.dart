@@ -124,7 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
+          Image.asset(
             _bgImage,
             fit: BoxFit.cover,
             width: size.width,
@@ -166,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         const SizedBox(width: 14),
-                        Image.network(
+                        Image.asset(
                           'assets/icon/locora.png',
                           width: 24,
                           height: 24,

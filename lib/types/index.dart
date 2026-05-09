@@ -81,6 +81,8 @@ class Review {
   final String userName;
   final String comment;
   final double rating;
+  final bool hidden;
+  final bool featured;
   final DateTime date;
 
   Review({
@@ -90,6 +92,8 @@ class Review {
     required this.userName,
     required this.comment,
     required this.rating,
+    required this.hidden,
+    required this.featured,
     required this.date,
   });
 
@@ -102,6 +106,8 @@ class Review {
       placeId: data['placeId'] ?? '',
       userName: data['userName'] ?? '',
       comment: data['comment'] ?? '',
+      hidden: data['hidden'] ?? false,
+      featured: data['featured'] ?? false,
       rating: (data['rating'] ?? 0).toDouble(),
       date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );

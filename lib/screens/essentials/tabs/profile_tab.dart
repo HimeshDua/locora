@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:locora/data/cities.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/utils/persistance.dart';
-import 'package:locora/utils/redirects.dart';
 import 'package:locora/utils/user_picture.dart';
 
 class ProfileTab extends StatefulWidget {
@@ -119,138 +119,164 @@ class _ProfileTabState extends State<ProfileTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.colors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.72,
-        minChildSize: 0.4,
-        maxChildSize: 0.92,
-        expand: false,
-        builder: (_, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.82,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, scrollController) {
+            return Material(
+              type: MaterialType.transparency,
               child: Container(
-                width: 36,
-                height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
-              child: Row(
-                children: [
-                  Text(
-                    'Choose your city',
-                    style: theme.typography.lg.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colors.foreground,
-                    ),
+                  color: theme.colors.background,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
                   ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(
-                      FIcons.x,
-                      size: 18,
-                      color: theme.colors.mutedForeground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, -4),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: theme.colors.border),
-            Expanded(
-              child: ListView.separated(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: pakistaniCities.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 1,
-                  indent: 20,
-                  endIndent: 20,
-                  color: theme.colors.border.withValues(alpha: 0.5),
+                  ],
                 ),
-                itemBuilder: (_, i) {
-                  final city = pakistaniCities[i];
-                  final isSelected = _selectedCity?.name == city.name;
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
 
-                  return InkWell(
-                    onTap: () => _updateCity(city),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colors.border,
+                        borderRadius: BorderRadius.circular(999),
                       ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
                       child: Row(
                         children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? theme.colors.foreground
-                                  : theme.colors.muted,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              isSelected ? FIcons.check : FIcons.mapPin,
-                              size: 16,
-                              color: isSelected
-                                  ? theme.colors.background
-                                  : theme.colors.mutedForeground,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  city.name,
-                                  style: theme.typography.sm.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colors.foreground,
+                                  'Select City',
+                                  style: theme.typography.xl.copyWith(
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 4),
                                 Text(
-                                  city.description,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.typography.xs.copyWith(
+                                  'Choose where you want to explore.',
+                                  style: theme.typography.sm.copyWith(
                                     color: theme.colors.mutedForeground,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          if (isSelected)
-                            FBadge(
-                              variant: FBadgeVariant.primary,
-                              child: const Text('Current'),
-                            ),
+                          FButton.icon(
+                            variant: FButtonVariant.ghost,
+                            onPress: () => Navigator.pop(context),
+                            child: const Icon(FIcons.x, size: 18),
+                          ),
                         ],
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  void _logout() {
-    FirebaseAuth.instance.signOut();
-    redirectAfterLogout(context);
+                    Divider(
+                      height: 1,
+                      color: theme.colors.border.withValues(alpha: 0.5),
+                    ),
+
+                    Expanded(
+                      child: ListView.separated(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: pakistaniCities.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (_, i) {
+                          final city = pakistaniCities[i];
+                          final isSelected = _selectedCity?.name == city.name;
+
+                          return FCard(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                _updateCity(city);
+                                Navigator.pop(context);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    FBadge(
+                                      variant: isSelected
+                                          ? FBadgeVariant.secondary
+                                          : FBadgeVariant.outline,
+                                      child: Icon(
+                                        isSelected
+                                            ? FIcons.check
+                                            : FIcons.building2,
+                                        size: 14,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 14),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            city.name,
+                                            style: theme.typography.sm.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color: isSelected
+                                                  ? theme.colors.primary
+                                                  : theme.colors.foreground,
+                                            ),
+                                          ),
+
+                                          const SizedBox(height: 4),
+
+                                          Text(
+                                            city.description,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.typography.xs.copyWith(
+                                              height: 1.45,
+                                              color:
+                                                  theme.colors.mutedForeground,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -369,118 +395,133 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Widget _buildCityCard(FThemeData theme) {
+    final city = _selectedCity;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionLabel(label: 'Your City', theme: theme),
         const SizedBox(height: 14),
-        if (_selectedCity != null) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                Image.network(
-                  _selectedCity!.imageUrl,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.6),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: const [0.4, 1.0],
-                      ),
-                    ),
+
+        FCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (city != null) ...[
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
                   ),
-                ),
-                Positioned(
-                  left: 14,
-                  right: 14,
-                  bottom: 14,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                  child: Stack(
                     children: [
-                      Expanded(
+                      Image.asset(
+                        'assets/onboarding/2.jpeg',
+                        height: 190,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.58),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 14,
+                        right: 14,
+                        child: FButton(
+                          variant: FButtonVariant.secondary,
+                          onPress: _openCityPicker,
+                          child: const Text('Change'),
+                        ),
+                      ),
+                      Positioned(
+                        left: 18,
+                        right: 18,
+                        bottom: 18,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              _selectedCity!.name,
-                              style: theme.typography.lg.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                            FBadge(
+                              variant: .outline,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(FIcons.building2, size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(city.name),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 12),
                             Text(
-                              _selectedCity!.description,
-                              maxLines: 1,
+                              city.description,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.typography.xs.copyWith(
-                                color: Colors.white.withValues(alpha: 0.75),
+                              style: theme.typography.sm.copyWith(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                height: 1.45,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: _openCityPicker,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.25),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Text(
-                            'Change',
-                            style: theme.typography.xs.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                Padding(
+                  padding: const EdgeInsets.all(22),
+                  child: Column(
+                    children: [
+                      FBadge(
+                        variant: .outline,
+                        child: Icon(FIcons.building2, size: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No city selected',
+                        style: theme.typography.sm.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colors.foreground,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Select your city to personalize recommendations and attractions.',
+                        textAlign: TextAlign.center,
+                        style: theme.typography.sm.copyWith(
+                          height: 1.45,
+                          color: theme.colors.mutedForeground,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      FButton(
+                        onPress: _openCityPicker,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(FIcons.mapPin, size: 16),
+                            SizedBox(width: 8),
+                            Text('Select City'),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-        ] else ...[
-          Text(
-            'No city selected yet.',
-            style: theme.typography.sm.copyWith(
-              color: theme.colors.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 12),
-          FButton(
-            onPress: _openCityPicker,
-            variant: .outline,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(FIcons.mapPin, size: 15),
-                const SizedBox(width: 7),
-                const Text('Select City'),
-              ],
-            ),
-          ),
-        ],
+        ),
       ],
     );
   }
@@ -518,7 +559,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Dark mode',
+                        widget.isDarkMode ? 'Dark mode' : "Light mode",
                         style: theme.typography.sm.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colors.foreground,
@@ -541,7 +582,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
                 FSwitch(
                   value: widget.isDarkMode,
-                  onChange: widget.onThemeToggle,
+                  onChange: (t) => widget.onThemeToggle(t),
                 ),
               ],
             ),
@@ -576,7 +617,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
   Widget _buildLogout(FThemeData theme) {
     return FButton(
-      onPress: _logout,
+      onPress: () => logoutUser(context),
       variant: .destructive,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -2,6 +2,20 @@ import 'dart:convert';
 import 'package:locora/types/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+Future<void> saveAdmin(bool isAdmin) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('is_admin', isAdmin);
+}
+
+Future<bool> getAdmin() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('is_admin') ?? false;
+}
+
+// -----
+// -TT-
+//  ~
+
 Future<void> saveTheme(String theme) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('theme', theme);

@@ -7,22 +7,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/types/index.dart';
+import 'package:locora/widgets/elements/section_label.dart';
 import 'package:locora/widgets/map/location_picker.dart';
 import 'package:locora/utils/cloudinary_config.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:locora/widgets/reviews/rating_card.dart';
+import 'package:locora/widgets/reviews/review_section.dart';
 
-class AddPlaceSheet extends StatefulWidget {
+class AddOrEditPlaceSheet extends StatefulWidget {
   final String? docId;
   final Place? existingData;
 
-  const AddPlaceSheet({super.key, this.docId, this.existingData});
+  const AddOrEditPlaceSheet({super.key, this.docId, this.existingData});
 
   @override
-  State<AddPlaceSheet> createState() => _AddPlaceSheetState();
+  State<AddOrEditPlaceSheet> createState() => _AddOrEditPlaceSheetState();
 }
 
-class _AddPlaceSheetState extends State<AddPlaceSheet> {
+class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
   final _formKey = GlobalKey<FormState>();
+  String? get placeId => widget.docId;
 
   late final TextEditingController _titleCtrl;
   late final TextEditingController _descCtrl;
@@ -117,10 +121,10 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
 
     try {
       final ref = FirebaseFirestore.instance.collection('places');
-      if (widget.docId == null) {
+      if (placeId == null) {
         await ref.add(data);
       } else {
-        await ref.doc(widget.docId).update(data);
+        await ref.doc(placeId).update(data);
       }
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.pop(context);
@@ -159,23 +163,31 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
                   children: [
                     _buildImagePicker(theme),
                     const SizedBox(height: 28),
-                    _SectionLabel(label: 'Place Details', theme: theme),
+                    SectionLabel(label: 'Place Details', theme: theme),
                     const SizedBox(height: 12),
                     _buildTitleField(),
                     const SizedBox(height: 12),
                     _buildDescriptionField(),
                     const SizedBox(height: 28),
-                    _SectionLabel(label: 'Categorization', theme: theme),
+                    SectionLabel(label: 'Categorization', theme: theme),
                     const SizedBox(height: 12),
                     _buildCategoryRow(theme),
                     const SizedBox(height: 28),
-                    _SectionLabel(label: 'Location', theme: theme),
+                    SectionLabel(label: 'Location', theme: theme),
                     const SizedBox(height: 12),
                     _buildLocationPicker(theme),
                     const SizedBox(height: 28),
-                    _SectionLabel(label: 'Rating', theme: theme),
+                    SectionLabel(label: 'Rating', theme: theme),
+                    if (placeId != null) ...[
+                      const SizedBox(height: 28),
+                      buildReviewsSection(theme, placeId!),
+                    ],
                     const SizedBox(height: 12),
-                    _buildRating(theme),
+                    buildRatingCard(
+                      theme,
+                      _rating,
+                      (r) => setState(() => _rating = r),
+                    ),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -208,7 +220,7 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
       child: Row(
         children: [
           Text(
-            widget.docId == null ? 'New Destination' : 'Update Destination',
+            placeId == null ? 'New Destination' : 'Update Destination',
             style: theme.typography.lg.copyWith(
               fontWeight: FontWeight.w700,
               color: theme.colors.foreground,
@@ -553,58 +565,58 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     );
   }
 
-  Widget _buildRating(FThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-      decoration: BoxDecoration(
-        color: theme.colors.muted,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colors.border, width: 0.8),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 32,
-            child: Text(
-              _rating.toStringAsFixed(1),
-              style: theme.typography.sm.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colors.foreground,
-              ),
-            ),
-          ),
-          Expanded(
-            child: SliderTheme(
-              data: SliderThemeData(
-                trackHeight: 2,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                activeTrackColor: theme.colors.foreground,
-                inactiveTrackColor: theme.colors.border,
-                thumbColor: theme.colors.foreground,
-                overlayColor: theme.colors.foreground.withValues(alpha: 0.12),
-              ),
-              child: Slider(
-                value: _rating,
-                min: 1,
-                max: 5,
-                divisions: 40,
-                onChanged: (v) => setState(() => _rating = v),
-              ),
-            ),
-          ),
-          Text(
-            '/ 5',
-            style: theme.typography.xs.copyWith(
-              color: theme.colors.mutedForeground,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildRating(FThemeData theme) {
+  //   return Container(
+  //     padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+  //     decoration: BoxDecoration(
+  //       color: theme.colors.muted,
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(color: theme.colors.border, width: 0.8),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
+  //         const SizedBox(width: 8),
+  //         SizedBox(
+  //           width: 32,
+  //           child: Text(
+  //             _rating.toStringAsFixed(1),
+  //             style: theme.typography.sm.copyWith(
+  //               fontWeight: FontWeight.w700,
+  //               color: theme.colors.foreground,
+  //             ),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: SliderTheme(
+  //             data: SliderThemeData(
+  //               trackHeight: 2,
+  //               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+  //               overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+  //               activeTrackColor: theme.colors.foreground,
+  //               inactiveTrackColor: theme.colors.border,
+  //               thumbColor: theme.colors.foreground,
+  //               overlayColor: theme.colors.foreground.withValues(alpha: 0.12),
+  //             ),
+  //             child: Slider(
+  //               value: _rating,
+  //               min: 1,
+  //               max: 5,
+  //               divisions: 40,
+  //               onChanged: (v) => setState(() => _rating = v),
+  //             ),
+  //           ),
+  //         ),
+  //         Text(
+  //           '/ 5',
+  //           style: theme.typography.xs.copyWith(
+  //             color: theme.colors.mutedForeground,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildActionBar(FThemeData theme) {
     return Container(
@@ -632,29 +644,10 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
             flex: 2,
             child: FButton(
               onPress: _uploading ? null : _save,
-              child: Text(widget.docId == null ? 'Create' : 'Save Changes'),
+              child: Text(placeId == null ? 'Create' : 'Save Changes'),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  final FThemeData theme;
-
-  const _SectionLabel({required this.label, required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: theme.typography.xs.copyWith(
-        fontWeight: FontWeight.w700,
-        color: theme.colors.mutedForeground,
-        letterSpacing: 1.1,
       ),
     );
   }

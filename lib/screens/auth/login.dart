@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
+          Image.asset(
             _bgImage,
             fit: BoxFit.cover,
             width: size.width,
@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Row(
                       children: [
-                        Image.network(
+                        Image.asset(
                           'assets/icon/locora.png',
                           width: 26,
                           height: 26,

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/widgets/button.dart';
 import 'package:locora/screens/auth/login.dart';
@@ -40,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
+          Image.asset(
             _bgImage,
             fit: BoxFit.cover,
             width: size.width,
@@ -67,8 +68,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Image.network(
-                        'assets/icon/locora.png',
+                      CachedNetworkImage(
+                        imageUrl: 'assets/icon/locora.png',
                         width: 28,
                         height: 28,
                       ),

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
+import 'package:locora/widgets/reviews/review_section.dart';
 
 class DetailAttractionScreen extends StatefulWidget {
   final Place place;
@@ -110,7 +111,7 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                     const SizedBox(height: 24),
                     _buildDivider(theme),
                     const SizedBox(height: 24),
-                    _buildReviewsSection(theme),
+                    buildReviewsSection(theme, widget.place.id),
                   ]),
                 ),
               ),
@@ -322,82 +323,84 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     );
   }
 
-  Widget _buildReviewsSection(FThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Reviews',
-          style: theme.typography.lg.copyWith(
-            fontWeight: FontWeight.w700,
-            color: theme.colors.foreground,
-          ),
-        ),
-        const SizedBox(height: 14),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('reviews')
-              .where('placeId', isEqualTo: widget.place.id)
-              .orderBy('date', descending: true)
-              .snapshots(),
-          builder: (_, snap) {
-            if (snap.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colors.foreground,
-                  ),
-                ),
-              );
-            }
+  // Widget _buildReviewsSection(FThemeData theme) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         'Reviews',
+  //         style: theme.typography.lg.copyWith(
+  //           fontWeight: FontWeight.w700,
+  //           color: theme.colors.foreground,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 14),
+  //       StreamBuilder<QuerySnapshot>(
+  //         stream: FirebaseFirestore.instance
+  //             .collection('places')
+  //             .doc(widget.place.id)
+  //             .collection('reviews')
+  //             .where('hidden', isEqualTo: false)
+  //             .orderBy('date', descending: true)
+  //             .snapshots(),
+  //         builder: (_, snap) {
+  //           if (snap.connectionState == ConnectionState.waiting) {
+  //             return Center(
+  //               child: Padding(
+  //                 padding: const EdgeInsets.all(24),
+  //                 child: CircularProgressIndicator(
+  //                   strokeWidth: 2,
+  //                   color: theme.colors.foreground,
+  //                 ),
+  //               ),
+  //             );
+  //           }
 
-            final reviews =
-                snap.data?.docs.map((e) => Review.fromFirestore(e)).toList() ??
-                [];
+  //           final reviews =
+  //               snap.data?.docs.map((e) => Review.fromFirestore(e)).toList() ??
+  //               [];
 
-            if (reviews.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        FIcons.messageSquare,
-                        size: 36,
-                        color: theme.colors.mutedForeground,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'No reviews yet.\nBe the first to share your experience.',
-                        textAlign: TextAlign.center,
-                        style: theme.typography.sm.copyWith(
-                          color: theme.colors.mutedForeground,
-                          height: 1.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
+  //           if (reviews.isEmpty) {
+  //             return Padding(
+  //               padding: const EdgeInsets.symmetric(vertical: 24),
+  //               child: Center(
+  //                 child: Column(
+  //                   children: [
+  //                     Icon(
+  //                       FIcons.messageSquare,
+  //                       size: 36,
+  //                       color: theme.colors.mutedForeground,
+  //                     ),
+  //                     const SizedBox(height: 10),
+  //                     Text(
+  //                       'No reviews yet.\nBe the first to share your experience.',
+  //                       textAlign: TextAlign.center,
+  //                       style: theme.typography.sm.copyWith(
+  //                         color: theme.colors.mutedForeground,
+  //                         height: 1.6,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             );
+  //           }
 
-            return Column(
-              children: reviews
-                  .map(
-                    (r) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _ReviewCard(review: r, theme: theme),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
-        ),
-      ],
-    );
-  }
+  //           return Column(
+  //             children: reviews
+  //                 .map(
+  //                   (r) => Padding(
+  //                     padding: const EdgeInsets.only(bottom: 12),
+  //                     child: _ReviewCard(review: r, theme: theme),
+  //                   ),
+  //                 )
+  //                 .toList(),
+  //           );
+  //         },
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildDivider(FThemeData theme) =>
       Divider(height: 1, color: theme.colors.border);

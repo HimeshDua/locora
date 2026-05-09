@@ -62,6 +62,10 @@ class AuthGate extends StatelessWidget {
                   final String city = data["city"] ?? "";
                   final bool admin = data["admin"] ?? false;
 
+                  if (admin) {
+                    saveAdmin(admin);
+                  }
+
                   if (city.isEmpty) {
                     return const SetupScreen();
                   }
