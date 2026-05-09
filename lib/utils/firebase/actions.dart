@@ -11,18 +11,24 @@ Future<void> saveSelectedCityToFirebase(String cityName, String? uid) async {
 }
 
 Future<void> addReview({
+  required String userId,
   required String placeId,
   required String userName,
   required String comment,
   required double rating,
 }) async {
-  await FirebaseFirestore.instance.collection('reviews').add({
-    'placeId': placeId,
-    'userName': userName,
-    'comment': comment,
-    'rating': rating,
-    'date': FieldValue.serverTimestamp(),
-  });
+  await FirebaseFirestore.instance
+      .collection('places')
+      .doc(placeId)
+      .collection('reviews')
+      .add({
+        'placeId': placeId,
+        'userId': userId,
+        'userName': userName,
+        'comment': comment,
+        'rating': rating,
+        'date': FieldValue.serverTimestamp(),
+      });
 }
 
 Future<List<Place>> fetchPlacesByCity(String cityName) async {

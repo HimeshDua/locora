@@ -1,6 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -23,89 +24,94 @@ class AddPlaceSheet extends StatefulWidget {
 class _AddPlaceSheetState extends State<AddPlaceSheet> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController title;
-  late final TextEditingController description;
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _descCtrl;
 
-  String city = "Karachi";
-  String category = "Attraction";
-  double rating = 4.0;
+  String _city = 'Karachi';
+  String _category = 'Attraction';
+  double _rating = 4.0;
+  String _imageUrl = '';
+  bool _uploading = false;
+  double? _lat;
+  double? _lng;
 
-  String imageUrl = "";
-  bool uploading = false;
-
-  double? lat;
-  double? lng;
-
-  final categories = ["Attraction", "Restaurant", "Hotel", "Event"];
+  final _categories = ['Attraction', 'Restaurant', 'Hotel', 'Event'];
 
   @override
   void initState() {
     super.initState();
     final d = widget.existingData;
-    title = TextEditingController(text: d?.title ?? "");
-    description = TextEditingController(text: d?.description ?? "");
-
+    _titleCtrl = TextEditingController(text: d?.title ?? '');
+    _descCtrl = TextEditingController(text: d?.description ?? '');
     if (d != null) {
-      city = d.city;
-      category = d.category;
-      rating = d.rating;
-      imageUrl = d.imageUrl;
-      lat = d.lat;
-      lng = d.lng;
+      _city = d.city;
+      _category = d.category;
+      _rating = d.rating;
+      _imageUrl = d.imageUrl;
+      _lat = d.lat;
+      _lng = d.lng;
     }
   }
 
   @override
   void dispose() {
-    title.dispose();
-    description.dispose();
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> pickImage() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
+  Future<void> _pickImage() async {
+    final file = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
     );
-
     if (file == null) return;
 
-    setState(() => uploading = true);
+    setState(() => _uploading = true);
     try {
       final res = await CloudinaryConfig.cloudinary.uploadFile(
         CloudinaryFile.fromFile(file.path, folder: 'places'),
       );
-      setState(() => imageUrl = res.secureUrl);
-    } catch (e) {
-      _showToast("Upload failed. Try again.");
+      setState(() => _imageUrl = res.secureUrl);
+    } catch (_) {
+      _toast('Upload failed. Try again.');
     } finally {
-      setState(() => uploading = false);
+      setState(() => _uploading = false);
     }
   }
 
-  void _showToast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+  Future<void> _openMapPicker() async {
+    final res = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            LocationPickerScreen(initialLat: _lat, initialLng: _lng),
+      ),
     );
+    if (res != null) {
+      setState(() {
+        _lat = res.latitude;
+        _lng = res.longitude;
+      });
+    }
   }
 
-  Future<void> save() async {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (imageUrl.isEmpty) {
-      _showToast("Please upload an image first");
+    if (_imageUrl.isEmpty) {
+      _toast('Please upload an image first');
       return;
     }
 
     final data = {
-      'title': title.text.trim(),
-      'description': description.text.trim(),
-      'city': city,
-      'category': category,
-      'rating': rating,
-      'imageUrl': imageUrl,
-      'lat': lat,
-      'lng': lng,
+      'title': _titleCtrl.text.trim(),
+      'description': _descCtrl.text.trim(),
+      'city': _city,
+      'category': _category,
+      'rating': _rating,
+      'imageUrl': _imageUrl,
+      'lat': _lat,
+      'lng': _lng,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -118,61 +124,59 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
       }
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.pop(context);
-    } catch (e) {
-      _showToast("Error saving data");
+    } catch (_) {
+      _toast('Error saving data');
     }
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme = FTheme.of(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        color: theme.colors.background,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
-          _buildHeader(theme),
+          _buildHandle(theme),
+          _buildSheetHeader(theme),
+          Divider(height: 1, color: theme.colors.border),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: Form(
-                key: _formKey,
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _imageSection(theme),
-                    const SizedBox(height: 32),
-                    _sectionLabel(theme, "Place Details"),
-                    _input(
-                      controller: title,
-                      label: "Place Title",
-                      icon: HugeIcons.strokeRoundedLocation01,
-                    ),
-                    const SizedBox(height: 16),
-                    _input(
-                      controller: description,
-                      label: "Description",
-                      icon: HugeIcons.strokeRoundedNote01,
-                      maxLines: 4,
-                    ),
-                    const SizedBox(height: 24),
-                    _sectionLabel(theme, "Categorization"),
-                    Row(
-                      children: [
-                        Expanded(child: _dropdownCity(theme)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _dropdownCategory(theme)),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    _sectionLabel(theme, "Location on Map"),
-                    _locationPicker(theme),
-                    const SizedBox(height: 32),
-                    _sectionLabel(theme, "Platform Rating"),
-                    _ratingSlider(theme),
-                    const SizedBox(height: 120),
+                    _buildImagePicker(theme),
+                    const SizedBox(height: 28),
+                    _SectionLabel(label: 'Place Details', theme: theme),
+                    const SizedBox(height: 12),
+                    _buildTitleField(),
+                    const SizedBox(height: 12),
+                    _buildDescriptionField(),
+                    const SizedBox(height: 28),
+                    _SectionLabel(label: 'Categorization', theme: theme),
+                    const SizedBox(height: 12),
+                    _buildCategoryRow(theme),
+                    const SizedBox(height: 28),
+                    _SectionLabel(label: 'Location', theme: theme),
+                    const SizedBox(height: 12),
+                    _buildLocationPicker(theme),
+                    const SizedBox(height: 28),
+                    _SectionLabel(label: 'Rating', theme: theme),
+                    const SizedBox(height: 12),
+                    _buildRating(theme),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -184,100 +188,146 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
-    return Column(
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 12, bottom: 8),
-          height: 4,
-          width: 40,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.outlineVariant,
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: Text(
-            widget.docId == null ? "New Destination" : "Update Destination",
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _sectionLabel(ThemeData theme, String text) {
+  Widget _buildHandle(FThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          text.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.primary,
-            letterSpacing: 1.5,
-            fontWeight: FontWeight.bold,
-          ),
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Container(
+        width: 36,
+        height: 4,
+        decoration: BoxDecoration(
+          color: theme.colors.border,
+          borderRadius: BorderRadius.circular(2),
         ),
       ),
     );
   }
 
-  Widget _imageSection(ThemeData theme) {
+  Widget _buildSheetHeader(FThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+      child: Row(
+        children: [
+          Text(
+            widget.docId == null ? 'New Destination' : 'Update Destination',
+            style: theme.typography.lg.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colors.foreground,
+            ),
+          ),
+          const Spacer(),
+          FButton.icon(
+            onPress: () => Navigator.pop(context),
+            child: Icon(
+              FIcons.x,
+              size: 15,
+              color: theme.colors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(FThemeData theme) {
     return GestureDetector(
-      onTap: uploading ? null : pickImage,
+      onTap: _uploading ? null : _pickImage,
       child: Container(
         height: 180,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
+          color: theme.colors.muted,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.colors.border, width: 0.8),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(14),
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              if (imageUrl.isNotEmpty)
-                Image.network(
-                  imageUrl,
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                ),
-              if (imageUrl.isEmpty && !uploading)
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      HugeIcon(
-                        icon: HugeIcons.strokeRoundedImageAdd01,
-                        size: 32,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: 8),
-                      Text("Add Photo", style: theme.textTheme.labelLarge),
-                    ],
+              if (_imageUrl.isNotEmpty)
+                CachedNetworkImage(imageUrl: _imageUrl, fit: BoxFit.cover),
+
+              if (_imageUrl.isNotEmpty)
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.transparent, Colors.black26],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
                   ),
                 ),
-              if (uploading)
-                const Center(child: CircularProgressIndicator.adaptive()),
-              if (imageUrl.isNotEmpty && !uploading)
+
+              if (_imageUrl.isEmpty && !_uploading)
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: theme.colors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colors.border,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Icon(
+                        FIcons.imagePlus,
+                        size: 20,
+                        color: theme.colors.mutedForeground,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Tap to add photo',
+                      style: theme.typography.sm.copyWith(
+                        color: theme.colors.mutedForeground,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+              if (_uploading)
+                Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colors.foreground,
+                  ),
+                ),
+
+              if (_imageUrl.isNotEmpty && !_uploading)
                 Positioned(
                   right: 12,
                   bottom: 12,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black54,
-                    radius: 18,
-                    child: const HugeIcon(
-                      icon: HugeIcons.strokeRoundedEdit03,
-                      size: 16,
-                      color: Colors.white,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 0.6,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(FIcons.pencil, size: 13, color: Colors.white),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Change',
+                          style: theme.typography.xs.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -288,176 +338,267 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     );
   }
 
-  // --- REFACTORED INPUT FIELD ---
-  Widget _input({
-    required TextEditingController controller,
-    required String label,
-    required List<List<dynamic>> icon,
-    int maxLines = 1,
-  }) {
-    final theme = Theme.of(context);
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-      decoration: InputDecoration(
-        labelText: label,
-        alignLabelWithHint: true,
-        prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: HugeIcon(
-            icon: icon,
-            size: 20,
-            color: theme.colorScheme.primary,
+  Widget _buildTitleField() {
+    return FormField<String>(
+      validator: (_) =>
+          _titleCtrl.text.trim().isEmpty ? 'Title cannot be empty' : null,
+      builder: (state) => FTextField(
+        control: .managed(
+          controller: _titleCtrl,
+          onChange: (_) => state.didChange(_titleCtrl.text),
+        ),
+        label: const Text('Place Title'),
+        hint: 'e.g. Clifton Beach',
+        error: state.errorText != null ? Text(state.errorText!) : null,
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return FormField<String>(
+      validator: (_) =>
+          _descCtrl.text.trim().isEmpty ? 'Description cannot be empty' : null,
+      builder: (state) => FTextField(
+        control: .managed(
+          controller: _descCtrl,
+          onChange: (_) => state.didChange(_descCtrl.text),
+        ),
+        label: const Text('Description'),
+        hint: 'Describe this place…',
+        maxLines: 4,
+        minLines: 3,
+        error: state.errorText != null ? Text(state.errorText!) : null,
+      ),
+    );
+  }
+
+  Widget _buildCategoryRow(FThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDropdown(
+            theme,
+            'City',
+            _city,
+            pakistaniCities.map((c) => c.name).toList(),
+            (v) => setState(() => _city = v!),
           ),
         ),
-        prefixIconConstraints: const BoxConstraints(
-          minWidth: 48,
-          minHeight: 48,
-        ),
-        filled: true,
-        fillColor: theme.colorScheme.surfaceContainerLow,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildDropdown(
+            theme,
+            'Type',
+            _category,
+            _categories,
+            (v) => setState(() => _category = v!),
           ),
         ),
-      ),
-      validator: (v) => v!.isEmpty ? "Cannot be empty" : null,
+      ],
     );
   }
 
-  Widget _dropdownCity(ThemeData theme) {
-    return DropdownButtonFormField<String>(
-      value: city,
-      items: pakistaniCities
-          .map((c) => DropdownMenuItem(value: c.name, child: Text(c.name)))
-          .toList(),
-      onChanged: (v) => setState(() => city = v!),
-      decoration: _dropdownDecoration(
-        theme,
-        "City",
-        HugeIcons.strokeRoundedCity03,
-      ),
-    );
-  }
-
-  Widget _dropdownCategory(ThemeData theme) {
-    return DropdownButtonFormField<String>(
-      value: category,
-      items: categories
-          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-          .toList(),
-      onChanged: (v) => setState(() => category = v!),
-      decoration: _dropdownDecoration(
-        theme,
-        "Type",
-        HugeIcons.strokeRoundedListIndentIncrease,
-      ),
-    );
-  }
-
-  InputDecoration _dropdownDecoration(
-    ThemeData theme,
+  Widget _buildDropdown(
+    FThemeData theme,
     String label,
-    List<List<dynamic>> icon,
+    String value,
+    List<String> items,
+    ValueChanged<String?> onChanged,
   ) {
-    return InputDecoration(
-      labelText: label,
-      alignLabelWithHint: true,
-      prefixIcon: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: HugeIcon(icon: icon, size: 20, color: theme.colorScheme.primary),
-      ),
-      filled: true,
-      fillColor: theme.colorScheme.surfaceContainerLow,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide.none,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.typography.sm.copyWith(
+            fontWeight: FontWeight.w500,
+            color: theme.colors.foreground,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: theme.colors.background,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: theme.colors.border, width: 0.9),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              dropdownColor: theme.colors.background,
+              style: theme.typography.sm.copyWith(
+                color: theme.colors.foreground,
+                fontWeight: FontWeight.w500,
+              ),
+              icon: Icon(
+                FIcons.chevronsUpDown,
+                size: 15,
+                color: theme.colors.mutedForeground,
+              ),
+              items: items
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _locationPicker(ThemeData theme) {
+  Widget _buildLocationPicker(FThemeData theme) {
+    final hasLocation = _lat != null && _lng != null;
+
     return GestureDetector(
       onTap: _openMapPicker,
       child: Container(
         height: 140,
+        //  height: 180,
+        width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-          color: theme.colorScheme.surfaceContainerLow,
+          color: theme.colors.muted,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.colors.border, width: 0.8),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: lat == null
-              ? const Center(child: Text("Tap to select location"))
-              : IgnorePointer(
-                  child: GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: LatLng(lat!, lng!),
-                      zoom: 15,
-                    ),
-                    markers: {
-                      Marker(
-                        markerId: const MarkerId("sel"),
-                        position: LatLng(lat!, lng!),
+          borderRadius: BorderRadius.circular(12),
+          child: hasLocation
+              ? Stack(
+                  children: [
+                    IgnorePointer(
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(_lat!, _lng!),
+                          zoom: 15,
+                        ),
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId('sel'),
+                            position: LatLng(_lat!, _lng!),
+                          ),
+                        },
+                        zoomControlsEnabled: false,
+                        myLocationButtonEnabled: false,
                       ),
-                    },
-                    zoomControlsEnabled: false,
-                  ),
+                    ),
+                    Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            width: 0.6,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(FIcons.pencil, size: 13, color: Colors.white),
+                            const SizedBox(width: 5),
+                            Text(
+                              'Change',
+                              style: theme.typography.xs.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: theme.colors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colors.border,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Icon(
+                        FIcons.mapPin,
+                        size: 20,
+                        color: theme.colors.mutedForeground,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Tap to select location',
+                      style: theme.typography.sm.copyWith(
+                        color: theme.colors.mutedForeground,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
     );
   }
 
-  Future<void> _openMapPicker() async {
-    final res = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LocationPickerScreen(initialLat: lat, initialLng: lng),
-      ),
-    );
-    if (res != null && res is LatLng) {
-      setState(() {
-        lat = res.latitude;
-        lng = res.longitude;
-      });
-    }
-  }
-
-  Widget _ratingSlider(ThemeData theme) {
+  Widget _buildRating(FThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
+        color: theme.colors.muted,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colors.border, width: 0.8),
       ),
       child: Row(
         children: [
-          HugeIcon(
-            icon: HugeIcons.strokeRoundedAward01,
-            color: Colors.amber.shade700,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            rating.toStringAsFixed(1),
-            style: const TextStyle(fontWeight: FontWeight.w900),
+          const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 32,
+            child: Text(
+              _rating.toStringAsFixed(1),
+              style: theme.typography.sm.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colors.foreground,
+              ),
+            ),
           ),
           Expanded(
-            child: Slider(
-              value: rating,
-              min: 1,
-              max: 5,
-              divisions: 40,
-              onChanged: (v) => setState(() => rating = v),
+            child: SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 2,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                activeTrackColor: theme.colors.foreground,
+                inactiveTrackColor: theme.colors.border,
+                thumbColor: theme.colors.foreground,
+                overlayColor: theme.colors.foreground.withValues(alpha: 0.12),
+              ),
+              child: Slider(
+                value: _rating,
+                min: 1,
+                max: 5,
+                divisions: 40,
+                onChanged: (v) => setState(() => _rating = v),
+              ),
+            ),
+          ),
+          Text(
+            '/ 5',
+            style: theme.typography.xs.copyWith(
+              color: theme.colors.mutedForeground,
             ),
           ),
         ],
@@ -465,45 +606,55 @@ class _AddPlaceSheetState extends State<AddPlaceSheet> {
     );
   }
 
-  Widget _buildActionBar(ThemeData theme) {
+  Widget _buildActionBar(FThemeData theme) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-        24,
-        16,
-        24,
-        MediaQuery.of(context).padding.bottom + 16,
+        20,
+        14,
+        20,
+        MediaQuery.of(context).padding.bottom + 14,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
-        ),
+        color: theme.colors.background,
+        border: Border(top: BorderSide(color: theme.colors.border, width: 0.8)),
       ),
       child: Row(
         children: [
           Expanded(
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Discard"),
+            child: FButton(
+              variant: .outline,
+              onPress: () => Navigator.pop(context),
+              child: const Text('Discard'),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
-            child: ElevatedButton(
-              onPressed: uploading ? null : save,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-              child: Text(widget.docId == null ? "Create" : "Save Changes"),
+            child: FButton(
+              onPress: _uploading ? null : _save,
+              child: Text(widget.docId == null ? 'Create' : 'Save Changes'),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  final FThemeData theme;
+
+  const _SectionLabel({required this.label, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: theme.typography.xs.copyWith(
+        fontWeight: FontWeight.w700,
+        color: theme.colors.mutedForeground,
+        letterSpacing: 1.1,
       ),
     );
   }

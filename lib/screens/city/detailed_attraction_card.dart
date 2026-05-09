@@ -42,6 +42,7 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     _controller.clear();
     FocusScope.of(context).unfocus();
     await addReview(
+      userId: user!.uid,
       placeId: widget.place.id,
       userName: user!.displayName!,
       comment: text,
@@ -127,9 +128,11 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
       pinned: true,
       backgroundColor: Colors.black,
       automaticallyImplyLeading: false,
-      leading: _GlassButton(
-        icon: FIcons.arrowLeft,
-        onTap: () => Navigator.pop(context),
+      leading: FButton.icon(
+        variant: .outline,
+        size: .sm,
+        onPress: () => Navigator.pop(context),
+        child: Icon(FIcons.arrowLeft, size: 18),
       ),
       actions: [
         StreamBuilder<DocumentSnapshot>(
@@ -143,14 +146,17 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
             final isFav = snap.data?.exists ?? false;
             return Row(
               children: [
-                _GlassButton(
+                _NavButton(
                   icon: isFav ? FIcons.heartOff : FIcons.heart,
                   onTap: () => _toggleFavorite(isFav),
-                  tint: isFav ? Colors.red.withValues(alpha: 0.35) : null,
-                  iconColor: isFav ? Colors.red.shade300 : Colors.white,
+                  isActive: isFav,
                 ),
                 const SizedBox(width: 10),
-                _GlassButton(icon: FIcons.mapPin, onTap: _openMaps),
+                _NavButton(
+                  icon: FIcons.mapPin,
+                  onTap: _openMaps,
+                  isActive: false,
+                ),
                 const SizedBox(width: 14),
               ],
             );
@@ -354,23 +360,25 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
             if (reviews.isEmpty) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  children: [
-                    Icon(
-                      FIcons.messageSquare,
-                      size: 36,
-                      color: theme.colors.mutedForeground,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'No reviews yet.\nBe the first to share your experience.',
-                      textAlign: TextAlign.center,
-                      style: theme.typography.sm.copyWith(
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        FIcons.messageSquare,
+                        size: 36,
                         color: theme.colors.mutedForeground,
-                        height: 1.6,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      Text(
+                        'No reviews yet.\nBe the first to share your experience.',
+                        textAlign: TextAlign.center,
+                        style: theme.typography.sm.copyWith(
+                          color: theme.colors.mutedForeground,
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -483,40 +491,28 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
   }
 }
 
-class _GlassButton extends StatelessWidget {
+class _NavButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final Color? tint;
-  final Color iconColor;
+  final bool isActive;
 
-  const _GlassButton({
+  const _NavButton({
     required this.icon,
     required this.onTap,
-    this.tint,
-    this.iconColor = Colors.white,
+    required this.isActive,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: tint ?? Colors.black.withValues(alpha: 0.3),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
-                width: 0.8,
-              ),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-        ),
+    final colors = FTheme.of(context).colors;
+    return FButton.icon(
+      size: .sm,
+      variant: .outline,
+      onPress: onTap,
+      child: Icon(
+        icon,
+        color: isActive ? colors.destructive : colors.foreground,
+        size: 18,
       ),
     );
   }

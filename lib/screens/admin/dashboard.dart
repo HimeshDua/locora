@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:locora/screens/admin/manage_splash_screen.dart';
+import 'package:forui/forui.dart';
+import 'package:locora/screens/admin/manage_places.dart';
 import 'package:locora/widgets/admin/add_place.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -17,192 +17,321 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(() => setState(() {}));
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 20,
-        elevation: 0,
-        backgroundColor: colorScheme.surface,
-        title: Row(
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedDashboardSquare01,
-              color: colorScheme.primary,
-              size: 28,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              "Admin Panel",
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorSize: TabBarIndicatorSize.label,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelColor: colorScheme.onSurfaceVariant.withValues(
-            alpha: 0.6,
-          ),
-          tabs: const [
-            Tab(text: "Overview"),
-            Tab(text: "Manage Places"),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [_OverviewTab(), ManagePlacesScreen()],
-      ),
-      floatingActionButton: AnimatedBuilder(
-        animation: _tabController,
-        builder: (context, _) {
-          return _tabController.index == 1
-              ? FloatingActionButton.extended(
-                  onPressed: () => _openAddSheet(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text("New Place"),
-                )
-              : const SizedBox.shrink();
-        },
-      ),
-    );
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
-  void _openAddSheet(BuildContext context) {
+  void _openAddSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      backgroundColor: FTheme.of(context).colors.background,
       builder: (_) => const AddPlaceSheet(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FTheme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colors.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(theme),
+            _buildTabBar(theme),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: const [_OverviewTab(), ManagePlacesScreen()],
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: _tabController.index == 1
+          ? FloatingActionButton(
+              onPressed: _openAddSheet,
+              backgroundColor: theme.colors.foreground,
+              child: Icon(
+                FIcons.plus,
+                color: theme.colors.background,
+                size: 20,
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildHeader(FThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Admin Panel',
+                style: theme.typography.xl2.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colors.foreground,
+                ),
+              ),
+              Text(
+                'Manage your platform',
+                style: theme.typography.sm.copyWith(
+                  color: theme.colors.mutedForeground,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: theme.colors.muted,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: theme.colors.border, width: 0.8),
+            ),
+            child: Icon(
+              FIcons.layoutDashboard,
+              size: 17,
+              color: theme.colors.foreground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabBar(FThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: theme.colors.muted,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            _Tab(
+              label: 'Overview',
+              selected: _tabController.index == 0,
+              onTap: () => _tabController.animateTo(0),
+              theme: theme,
+            ),
+            _Tab(
+              label: 'Manage Places',
+              selected: _tabController.index == 1,
+              onTap: () => _tabController.animateTo(1),
+              theme: theme,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// --- OVERVIEW TAB (Responsive Grid) ---
+class _Tab extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final FThemeData theme;
+
+  const _Tab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: selected ? theme.colors.background : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: selected
+                ? Border.all(color: theme.colors.border, width: 0.8)
+                : null,
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: theme.typography.sm.copyWith(
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              color: selected
+                  ? theme.colors.foreground
+                  : theme.colors.mutedForeground,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _OverviewTab extends StatelessWidget {
   const _OverviewTab();
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Responsive column count
-        int crossAxisCount = constraints.maxWidth > 900
-            ? 4
-            : (constraints.maxWidth > 600 ? 3 : 2);
+    final theme = FTheme.of(context);
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Platform Stats",
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.1,
-                children: [
-                  _statCard(
-                    context,
-                    "Places",
-                    "120",
-                    HugeIcons.strokeRoundedLocation01,
-                    Colors.blue,
-                  ),
-                  _statCard(
-                    context,
-                    "Cities",
-                    "8",
-                    HugeIcons.strokeRoundedBuilding06,
-                    Colors.orange,
-                  ),
-                  _statCard(
-                    context,
-                    "Reviews",
-                    "1.2k",
-                    HugeIcons.strokeRoundedComment01,
-                    Colors.green,
-                  ),
-                  _statCard(
-                    context,
-                    "Users",
-                    "340",
-                    HugeIcons.strokeRoundedUser,
-                    Colors.purple,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _statCard(
-    BuildContext context,
-    String title,
-    String value,
-    List<List<dynamic>> icon,
-    Color accent,
-  ) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: HugeIcon(icon: icon, color: accent, size: 20),
-          ),
-          const Spacer(),
           Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
+            'Overview',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: theme.colors.foreground,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            'Platform stats at a glance',
+            style: theme.typography.sm.copyWith(
+              color: theme.colors.mutedForeground,
             ),
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cols = constraints.maxWidth > 600 ? 4 : 2;
+              final itemWidth = (constraints.maxWidth - (cols - 1) * 12) / cols;
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _StatCard(
+                    title: 'Places',
+                    value: '120',
+                    icon: FIcons.mapPin,
+                    color: const Color(0xFF3B82F6),
+                    width: itemWidth,
+                    theme: theme,
+                  ),
+                  _StatCard(
+                    title: 'Cities',
+                    value: '8',
+                    icon: FIcons.building2,
+                    color: const Color(0xFFF97316),
+                    width: itemWidth,
+                    theme: theme,
+                  ),
+                  _StatCard(
+                    title: 'Reviews',
+                    value: '1.2k',
+                    icon: FIcons.messageSquare,
+                    color: const Color(0xFF22C55E),
+                    width: itemWidth,
+                    theme: theme,
+                  ),
+                  _StatCard(
+                    title: 'Users',
+                    value: '340',
+                    icon: FIcons.users,
+                    color: const Color(0xFFA855F7),
+                    width: itemWidth,
+                    theme: theme,
+                  ),
+                ],
+              );
+            },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final double width;
+  final FThemeData theme;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.width,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.colors.border, width: 0.8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, size: 17, color: color),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              value,
+              style: theme.typography.xl2.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colors.foreground,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: theme.typography.sm.copyWith(
+                color: theme.colors.mutedForeground,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -76,6 +76,8 @@ class City {
 
 class Review {
   final String id;
+  final String placeId;
+  final String userId;
   final String userName;
   final String comment;
   final double rating;
@@ -83,6 +85,8 @@ class Review {
 
   Review({
     required this.id,
+    required this.placeId,
+    required this.userId,
     required this.userName,
     required this.comment,
     required this.rating,
@@ -94,6 +98,8 @@ class Review {
 
     return Review(
       id: doc.id,
+      userId: data['userId'] ?? '',
+      placeId: data['placeId'] ?? '',
       userName: data['userName'] ?? '',
       comment: data['comment'] ?? '',
       rating: (data['rating'] ?? 0).toDouble(),

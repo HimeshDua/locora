@@ -18,7 +18,7 @@ class _HomeTabState extends State<HomeTab> {
   String query = "";
   String selectedCategory = "All";
 
-  final _categories = ['All', 'Attractions', 'Restaurants', 'Hotels', 'Events'];
+  final _categories = ['All', 'Attraction', 'Restaurant', 'Hotel', 'Event'];
   final _searchController = TextEditingController();
 
   @override
