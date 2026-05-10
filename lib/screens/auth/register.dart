@@ -1,11 +1,10 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/utils/is_indicators.dart';
@@ -60,16 +59,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password.isEmpty ||
         confirmPassword.isEmpty ||
         selectedCity == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all fields')),
-      );
+      FToast(title: Text('Please complete all fields'), variant: .destructive);
+
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      FToast(title: Text('Passwords do not match'), variant: .destructive);
       return;
     }
 
@@ -89,6 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'name': name,
         'city': selectedCity,
         'email': email,
+        'photoURL': "",
         'createdAt': FieldValue.serverTimestamp(),
         'admin': isAdmin(email) || false,
       });
@@ -109,6 +106,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => isLoading = true);
+
+    try {
+      await GoogleSignIn.instance.initialize();
+      final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+          .authenticate();
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCred = await _auth.signInWithCredential(
+        credential,
+      );
+      final User? user = userCred.user;
+
+      if (user == null) throw Exception('Firebase User is null');
+
+      final userDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+      final doc = await userDocRef.get();
+
+      if (!doc.exists) {
+        await userDocRef.set({
+          'uid': user.uid,
+          'name': user.displayName ?? 'Anonymous',
+          'city': selectedCity,
+          'email': user.email ?? '',
+          'photoURL': user.photoURL ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+          'admin': isAdmin(user.email!) || false,
+        });
+      }
+
+      if (mounted) {
+        redirectBasedOnAuthnCity(context);
+      }
+    } catch (e) {
+      String errorMessage = 'An unexpected error occurred.';
+
+      if (e is FirebaseAuthException) {
+        errorMessage = e.message ?? 'Authentication failed.';
+      } else if (e.toString().contains('network_error')) {
+        errorMessage = 'Please check your internet connection.';
+      }
+
+      FToast(title: Text(errorMessage));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -146,7 +198,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
 
-          // Container(color: Colors.black.withValues(alpha: 0.64)),
           SafeArea(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(28, 16, 28, bottom + 24),
@@ -338,6 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: FButton(
+                        variant: .primary,
                         onPress: isLoading ? null : _register,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -348,25 +400,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: theme.colors.muted,
                                 ),
                               )
                             else ...[
-                              Text(
-                                'Create account',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.2,
-                                  color: theme.colors.muted,
-                                ),
-                              ),
+                              Text('Create account'),
                               const SizedBox(width: 8),
                               HugeIcon(
                                 icon: HugeIcons.strokeRoundedArrowRight01,
-                                color: theme.colors.muted,
                                 size: 18,
                               ),
                             ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    Row(
+                      children: [
+                        Expanded(child: FDivider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: theme.colors.mutedForeground,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: FDivider()),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: isLoading ? null : _signInWithGoogle,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedGoogle,
+                              color: theme.colors.foreground,
+                              size: 17,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colors.foreground,
+                                letterSpacing: -0.1,
+                              ),
+                            ),
                           ],
                         ),
                       ),

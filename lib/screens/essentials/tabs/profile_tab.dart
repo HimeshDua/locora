@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -72,6 +71,106 @@ class _ProfileTabState extends State<ProfileTab> {
       Navigator.pop(context);
       Navigator.pushNamed(context, '/');
     }
+  }
+
+  // Inside _ProfileTabState — add this method alongside _openEditName / _openCityPicker
+
+  Future<void> _resetPassword() async {
+    final email = user?.email;
+    if (email == null) return;
+
+    showFDialog(
+      context: context,
+      builder: (context, style, animation) => FDialog(
+        style: style,
+        animation: animation,
+        direction: Axis.vertical,
+        title: const Text('Reset password'),
+        body: Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 4),
+          child: Text(
+            'A password reset link will be sent to $email.',
+            style: FTheme.of(context).typography.sm.copyWith(
+              color: FTheme.of(context).colors.mutedForeground,
+              height: 1.5,
+            ),
+          ),
+        ),
+        actions: [
+          FButton(
+            variant: FButtonVariant.outline,
+            onPress: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FButton(
+            onPress: () async {
+              Navigator.pop(context);
+              try {
+                await FirebaseAuth.instance.sendPasswordResetEmail(
+                  email: email,
+                );
+                if (context.mounted) {
+                  showFDialog(
+                    context: context,
+                    builder: (context, style, animation) => FDialog(
+                      style: style,
+                      animation: animation,
+                      direction: Axis.vertical,
+                      title: const Text('Email sent'),
+                      body: Padding(
+                        padding: const EdgeInsets.only(top: 6, bottom: 4),
+                        child: Text(
+                          'Check your inbox at $email to reset your password.',
+                          style: FTheme.of(context).typography.sm.copyWith(
+                            color: FTheme.of(context).colors.mutedForeground,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                      actions: [
+                        FButton(
+                          onPress: () => Navigator.pop(context),
+                          child: const Text('Done'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              } on FirebaseAuthException catch (e) {
+                if (context.mounted) {
+                  showFDialog(
+                    context: context,
+                    builder: (context, style, animation) => FDialog(
+                      style: style,
+                      animation: animation,
+                      direction: Axis.vertical,
+                      title: const Text('Something went wrong'),
+                      body: Padding(
+                        padding: const EdgeInsets.only(top: 6, bottom: 4),
+                        child: Text(
+                          e.message ?? 'Failed to send reset email.',
+                          style: FTheme.of(context).typography.sm.copyWith(
+                            color: FTheme.of(context).colors.mutedForeground,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                      actions: [
+                        FButton(
+                          onPress: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Send link'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _openEditName() {
@@ -610,6 +709,13 @@ class _ProfileTabState extends State<ProfileTab> {
           label: 'Notifications',
           theme: theme,
           onTap: () {},
+        ),
+        _MenuDivider(theme: theme),
+        _MenuItem(
+          icon: FIcons.keyRound,
+          label: 'Reset Password',
+          theme: theme,
+          onTap: _resetPassword,
         ),
       ],
     );

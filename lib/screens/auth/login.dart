@@ -1,11 +1,13 @@
 import 'dart:math';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:locora/screens/auth/register.dart';
 import 'package:locora/utils/redirects.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:locora/utils/is_indicators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,6 +65,57 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => isLoading = true);
+
+    try {
+      await GoogleSignIn.instance.initialize();
+      final GoogleSignInAccount googleUser = await GoogleSignIn.instance
+          .authenticate();
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCred = await _auth.signInWithCredential(
+        credential,
+      );
+      final User? user = userCred.user;
+
+      if (user == null) throw Exception('Firebase User is null');
+
+      final userDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
+      final doc = await userDocRef.get();
+
+      if (!doc.exists) {
+        await userDocRef.set({
+          'uid': user.uid,
+          'name': user.displayName ?? 'Anonymous',
+          'city': null,
+          'email': user.email ?? '',
+          'photoURL': user.photoURL ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+          'admin': isAdmin(user.email!) || false,
+        });
+      }
+
+      if (mounted) redirectBasedOnAuthnCity(context);
+    } catch (e) {
+      String errorMessage = 'An unexpected error occurred.';
+      if (e is FirebaseAuthException) {
+        errorMessage = e.message ?? 'Authentication failed.';
+      } else if (e.toString().contains('network_error')) {
+        errorMessage = 'Please check your internet connection.';
+      }
+      FToast(title: Text(errorMessage));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -255,6 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
 
                     const SizedBox(height: 28),
+                    const SizedBox(height: 28),
 
                     Row(
                       children: [
@@ -274,6 +328,55 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
 
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: isLoading ? null : _signInWithGoogle,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedGoogle,
+                              color: theme.colors.foreground,
+                              size: 17,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colors.foreground,
+                                letterSpacing: -0.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    Row(
+                      children: [
+                        Expanded(child: FDivider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text(
+                            'NEW HERE?',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: theme.colors.mutedForeground,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: FDivider()),
+                      ],
+                    ),
+
                     const SizedBox(height: 28),
 
                     FButton(
@@ -284,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           builder: (_) => const RegisterScreen(),
                         ),
                       ),
-                      child: Text('Create account'),
+                      child: const Text('Create account'),
                     ),
 
                     SizedBox(height: bottom + 8),
