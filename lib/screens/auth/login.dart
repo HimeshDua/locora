@@ -74,14 +74,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
-      await GoogleSignIn.instance.initialize();
+      print("Juice");
+      // GoogleSignIn.instance.initialize();
+      print("Juice 1");
       final GoogleSignInAccount googleUser = await GoogleSignIn.instance
           .authenticate();
+
+      print("juice 2");
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      print("juice 3");
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
+      print("juice 4");
 
       final UserCredential userCred = await _auth.signInWithCredential(
         credential,
@@ -110,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) redirectBasedOnAuthnCity(context);
     } catch (e) {
       String errorMessage = 'An unexpected error occurred.';
+      print(e);
       if (e is FirebaseAuthException) {
         errorMessage = e.message ?? 'Authentication failed.';
       } else if (e.toString().contains('network_error')) {
