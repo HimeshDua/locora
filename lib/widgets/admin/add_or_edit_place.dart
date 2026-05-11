@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/types/index.dart';
+import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/widgets/elements/section_label.dart';
 import 'package:locora/widgets/map/location_picker.dart';
 import 'package:locora/utils/cloudinary_config.dart';
@@ -123,9 +124,22 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
     try {
       final ref = FirebaseFirestore.instance.collection('places');
       if (placeId == null) {
-        await ref.add(data);
+        final doc = await ref.add(data);
+        await pushNotification(
+          placeId: doc.id,
+          title: data['title'] as String,
+          city: data['city'] as String,
+          isUpdated: false,
+        );
       } else {
         await ref.doc(placeId).update(data);
+
+        await pushNotification(
+          placeId: placeId!,
+          title: data['title'] as String,
+          city: data['city'] as String,
+          isUpdated: true,
+        );
       }
       HapticFeedback.mediumImpact();
       if (mounted) Navigator.pop(context);

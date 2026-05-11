@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:forui/forui.dart'; 
+import 'package:forui/forui.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -18,9 +18,7 @@ class NotificationScreen extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         title: Text(
           "Notifications",
-          style: theme.typography.xl.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: theme.typography.xl.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -31,9 +29,7 @@ class NotificationScreen extends StatelessWidget {
         builder: (context, snapshot) {
           // Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           // Empty state
@@ -48,9 +44,7 @@ class NotificationScreen extends StatelessWidget {
             itemCount: notifications.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
-              return _NotificationCard(
-                data: notifications[index],
-              );
+              return _NotificationCard(data: notifications[index]);
             },
           );
         },
@@ -62,9 +56,7 @@ class NotificationScreen extends StatelessWidget {
 class _NotificationCard extends StatelessWidget {
   final QueryDocumentSnapshot data;
 
-  const _NotificationCard({
-    required this.data,
-  });
+  const _NotificationCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -75,24 +67,6 @@ class _NotificationCard extends StatelessWidget {
     final timestamp = data['timestamp'];
 
     return FCard(
-      padding: const EdgeInsets.all(16),
-      style: FCardStyle(
-        decoration: BoxDecoration(
-          color: theme.colors.background,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: theme.colors.border.withOpacity(0.35),
-          ),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 20,
-              spreadRadius: -6,
-              offset: const Offset(0, 10),
-              color: Colors.black.withOpacity(0.06),
-            ),
-          ],
-        ),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,11 +77,7 @@ class _NotificationCard extends StatelessWidget {
               color: theme.colors.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(
-              FIcons.notification,
-              size: 22,
-              color: theme.colors.primary,
-            ),
+            child: Icon(FIcons.bell, size: 22, color: theme.colors.primary),
           ),
 
           const SizedBox(width: 14),
@@ -120,7 +90,7 @@ class _NotificationCard extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.typography.base.copyWith(
+                  style: theme.typography.lg.copyWith(
                     fontWeight: FontWeight.w700,
                     height: 1.3,
                   ),
@@ -195,7 +165,7 @@ class _EmptyState extends StatelessWidget {
                 borderRadius: BorderRadius.circular(26),
               ),
               child: Icon(
-                FIcons.NotificationOff,
+                FIcons.bellOff,
                 size: 38,
                 color: theme.colors.primary,
               ),
@@ -206,9 +176,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               "No notifications yet",
               textAlign: TextAlign.center,
-              style: theme.typography.lg.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: theme.typography.lg.copyWith(fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 10),
