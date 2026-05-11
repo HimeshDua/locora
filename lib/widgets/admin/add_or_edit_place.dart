@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/widgets/elements/section_label.dart';
@@ -481,19 +482,38 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
               ? Stack(
                   children: [
                     IgnorePointer(
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(_lat!, _lng!),
-                          zoom: 15,
-                        ),
-                        markers: {
-                          Marker(
-                            markerId: const MarkerId('sel'),
-                            position: LatLng(_lat!, _lng!),
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: LatLng(_lat!, _lng!),
+                          initialZoom: 15,
+                          interactionOptions: const InteractionOptions(
+                            flags: InteractiveFlag.none,
                           ),
-                        },
-                        zoomControlsEnabled: false,
-                        myLocationButtonEnabled: false,
+                        ),
+
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.locora.app',
+                          ),
+
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(_lat!, _lng!),
+                                width: 50,
+                                height: 50,
+
+                                child: Icon(
+                                  FIcons.locate,
+                                  color: theme.colors.primary,
+                                  size: 28,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                     Positioned(
@@ -564,59 +584,6 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
       ),
     );
   }
-
-  // Widget _buildRating(FThemeData theme) {
-  //   return Container(
-  //     padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-  //     decoration: BoxDecoration(
-  //       color: theme.colors.muted,
-  //       borderRadius: BorderRadius.circular(12),
-  //       border: Border.all(color: theme.colors.border, width: 0.8),
-  //     ),
-  //     child: Row(
-  //       children: [
-  //         const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
-  //         const SizedBox(width: 8),
-  //         SizedBox(
-  //           width: 32,
-  //           child: Text(
-  //             _rating.toStringAsFixed(1),
-  //             style: theme.typography.sm.copyWith(
-  //               fontWeight: FontWeight.w700,
-  //               color: theme.colors.foreground,
-  //             ),
-  //           ),
-  //         ),
-  //         Expanded(
-  //           child: SliderTheme(
-  //             data: SliderThemeData(
-  //               trackHeight: 2,
-  //               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-  //               overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-  //               activeTrackColor: theme.colors.foreground,
-  //               inactiveTrackColor: theme.colors.border,
-  //               thumbColor: theme.colors.foreground,
-  //               overlayColor: theme.colors.foreground.withValues(alpha: 0.12),
-  //             ),
-  //             child: Slider(
-  //               value: _rating,
-  //               min: 1,
-  //               max: 5,
-  //               divisions: 40,
-  //               onChanged: (v) => setState(() => _rating = v),
-  //             ),
-  //           ),
-  //         ),
-  //         Text(
-  //           '/ 5',
-  //           style: theme.typography.xs.copyWith(
-  //             color: theme.colors.mutedForeground,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildActionBar(FThemeData theme) {
     return Container(

@@ -5,7 +5,7 @@ class SectionLabel extends StatelessWidget {
   final String label;
   final FThemeData theme;
 
-  const SectionLabel({required this.label, required this.theme});
+  const SectionLabel({super.key, required this.label, required this.theme});
 
   @override
   Widget build(BuildContext context) {

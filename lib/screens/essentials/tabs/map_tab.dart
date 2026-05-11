@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:forui/forui.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 import 'package:locora/types/index.dart';
 
 class MapTab extends StatefulWidget {
@@ -13,29 +19,25 @@ class MapTab extends StatefulWidget {
 }
 
 class _MapTabState extends State<MapTab> {
-  GoogleMapController? _controller;
+  final MapController _mapController = MapController();
+
   Position? _currentPosition;
-  MapType _mapType = MapType.normal;
-  Set<Marker> _markers = {};
+  List<LatLng> _routePoints = [];
+
+  final String orsApiKey = dotenv.env['OPEN_ROUTER_MAP_KEY'] ?? '';
 
   @override
   void initState() {
     super.initState();
     _initLocation();
-    _loadMarkers();
   }
 
-  @override
-  void didUpdateWidget(covariant MapTab oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.places != widget.places) {
-      _loadMarkers();
-    }
-  }
-
-  // 📍 Get user location
   Future<void> _initLocation() async {
+    if (orsApiKey.isEmpty) {
+      debugPrint("ORS API KEY MISSING");
+      return;
+    }
+
     final permission = await Geolocator.requestPermission();
 
     if (permission == LocationPermission.denied ||
@@ -44,175 +46,130 @@ class _MapTabState extends State<MapTab> {
     }
 
     final pos = await Geolocator.getCurrentPosition();
-    setState(() => _currentPosition = pos);
-  }
 
-  // 📌 Convert places → markers
-  void _loadMarkers() {
-    final markers = widget.places
-        .map((place) {
-          if (place.lat == null ||
-              place.lng == null ||
-              place.lat == 0 ||
-              place.lng == 0) {
-            return null;
-          }
-
-          return Marker(
-            markerId: MarkerId(place.id),
-            position: LatLng(place.lat!, place.lng!),
-            infoWindow: InfoWindow(
-              title: place.title,
-              snippet: place.category,
-              onTap: () => _openPlaceDetails(place),
-            ),
-          );
-        })
-        .whereType<Marker>()
-        .toSet();
-
-    setState(() => _markers = markers);
-  }
-
-  Future<void> _fitBounds() async {
-    if (_markers.isEmpty || _controller == null) return;
-
-    final bounds = _createBounds(_markers);
-
-    await _controller!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
-  }
-
-  LatLngBounds _createBounds(Set<Marker> markers) {
-    final lats = markers.map((m) => m.position.latitude);
-    final lngs = markers.map((m) => m.position.longitude);
-
-    return LatLngBounds(
-      southwest: LatLng(
-        lats.reduce((a, b) => a < b ? a : b),
-        lngs.reduce((a, b) => a < b ? a : b),
-      ),
-      northeast: LatLng(
-        lats.reduce((a, b) => a > b ? a : b),
-        lngs.reduce((a, b) => a > b ? a : b),
-      ),
-    );
-  }
-
-  // 📍 Recenter map to user
-  void _recenter() {
-    if (_currentPosition == null || _controller == null) return;
-
-    _controller!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(
-            _currentPosition!.latitude,
-            _currentPosition!.longitude,
-          ),
-          zoom: 14,
-        ),
-      ),
-    );
-  }
-
-  // 🛰️ Toggle map type
-  void _toggleMapType() {
     setState(() {
-      _mapType = _mapType == MapType.normal
-          ? MapType.satellite
-          : MapType.normal;
+      _currentPosition = pos;
     });
   }
 
-  // 📄 Open details
-  void _openPlaceDetails(Place place) {
-    final theme = Theme.of(context);
+  Future<void> _getRoute(Place place) async {
+    if (_currentPosition == null) return;
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: theme.colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(place.title, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 6),
-              Text(
-                place.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 10),
+    final start =
+        '${_currentPosition!.longitude},${_currentPosition!.latitude}';
 
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // navigate to detail screen
-                },
-                child: const Text("View Details"),
-              ),
-            ],
-          ),
-        );
-      },
+    final end = '${place.lng},${place.lat}';
+
+    final url =
+        'https://api.openrouteservice.org/v2/directions/driving-car'
+        '?api_key=$orsApiKey'
+        '&start=$start'
+        '&end=$end';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data['features'] == null || data['features'].isEmpty) {
+        return;
+      }
+
+      final coords = data['features'][0]['geometry']['coordinates'] as List;
+
+      final points = coords.map((c) {
+        return LatLng(c[1], c[0]);
+      }).toList();
+
+      setState(() {
+        _routePoints = points;
+      });
+    }
+  }
+
+  void _recenter() {
+    if (_currentPosition == null) return;
+
+    _mapController.move(
+      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      14,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: LatLng(24.8607, 67.0011),
+          initialZoom: 16,
+        ),
+
         children: [
-          GoogleMap(
-            initialCameraPosition: const CameraPosition(
-              target: LatLng(24.8607, 67.0011),
-              zoom: 12,
-            ),
-            onMapCreated: (controller) {
-              _controller = controller;
-              _fitBounds();
-            },
-            myLocationEnabled: true,
-            markers: _markers,
-            mapType: _mapType,
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.locora.app',
           ),
 
-          // Controls
-          Positioned(
-            bottom: 100,
-            right: 16,
-            child: Column(
-              children: [
-                _mapButton(Icons.my_location, _recenter),
-                const SizedBox(height: 10),
-                _mapButton(Icons.layers, _toggleMapType),
-              ],
-            ),
+          MarkerLayer(
+            markers: [
+              ...widget.places
+                  .where(
+                    (place) =>
+                        place.lat != null &&
+                        place.lng != null &&
+                        place.lat != 0 &&
+                        place.lng != 0,
+                  )
+                  .map((place) {
+                    return Marker(
+                      point: LatLng(place.lat!, place.lng!),
+                      width: 80,
+                      height: 80,
+
+                      child: GestureDetector(
+                        onTap: () {
+                          _getRoute(place);
+                        },
+
+                        child: const Icon(
+                          Icons.location_on,
+                          size: 40,
+                          color: Colors.red,
+                        ),
+                      ),
+                    );
+                  }),
+
+              if (_currentPosition != null)
+                Marker(
+                  point: LatLng(
+                    _currentPosition!.latitude,
+                    _currentPosition!.longitude,
+                  ),
+                  width: 60,
+                  height: 60,
+
+                  child: const Icon(Icons.my_location, color: Colors.blue),
+                ),
+            ],
           ),
+
+          if (_routePoints.isNotEmpty)
+            PolylineLayer(
+              polylines: [Polyline(points: _routePoints, strokeWidth: 5)],
+            ),
         ],
       ),
-    );
-  }
 
-  Widget _mapButton(IconData icon, VoidCallback onTap) {
-    final theme = Theme.of(context);
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
-    return Material(
-      color: theme.colorScheme.surface,
-      elevation: 4,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Icon(icon, color: theme.colorScheme.onSurface),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 90),
+        child: FloatingActionButton(
+          onPressed: _recenter,
+          child: const Icon(FIcons.locate),
         ),
       ),
     );

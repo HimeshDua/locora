@@ -6,9 +6,12 @@ import 'package:locora/firebase_options.dart';
 import 'package:locora/utils/cloudinary_config.dart';
 import 'package:locora/utils/persistance.dart';
 import 'package:locora/wrapper/auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
 
   CloudinaryConfig.initialize();
 

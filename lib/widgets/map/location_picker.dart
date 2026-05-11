@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:forui/forui.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   final double? initialLat;
@@ -12,26 +16,47 @@ class LocationPickerScreen extends StatefulWidget {
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
-  LatLng? selectedLocation;
-  GoogleMapController? _controller;
+  final MapController _mapController = MapController();
+
+  late LatLng _selectedLocation;
+
+  bool _isLoadingLocation = false;
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.initialLat != null && widget.initialLng != null) {
-      selectedLocation = LatLng(widget.initialLat!, widget.initialLng!);
-    }
+    _selectedLocation = LatLng(
+      widget.initialLat ?? 24.8607,
+      widget.initialLng ?? 67.0011,
+    );
   }
 
-  void _onTap(LatLng pos) {
-    setState(() => selectedLocation = pos);
+  Future<void> _goToCurrentLocation() async {
+    setState(() => _isLoadingLocation = true);
+
+    final permission = await Geolocator.requestPermission();
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      setState(() => _isLoadingLocation = false);
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition();
+
+    final latLng = LatLng(position.latitude, position.longitude);
+
+    _mapController.move(latLng, 16);
+
+    setState(() {
+      _selectedLocation = latLng;
+      _isLoadingLocation = false;
+    });
   }
 
   void _confirm() {
-    if (selectedLocation != null) {
-      Navigator.pop(context, selectedLocation);
-    }
+    Navigator.pop(context, _selectedLocation);
   }
 
   @override
@@ -39,44 +64,172 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Pick Location"),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
       body: Stack(
         children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: selectedLocation ?? const LatLng(24.8607, 67.0011),
-              zoom: 14,
+          FlutterMap(
+            mapController: _mapController,
+
+            options: MapOptions(
+              initialCenter: _selectedLocation,
+              initialZoom: 14,
+
+              onPositionChanged: (position, hasGesture) {
+                setState(() {
+                  _selectedLocation = position.center;
+                });
+              },
             ),
-            onTap: _onTap,
-            onMapCreated: (c) => _controller = c,
-            markers: selectedLocation == null
-                ? {}
-                : {
-                    Marker(
-                      markerId: const MarkerId("selected"),
-                      position: selectedLocation!,
-                    ),
-                  },
-            myLocationEnabled: true,
+
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.locora.app',
+              ),
+            ],
           ),
 
-          // Floating confirm button
-          Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
-            child: ElevatedButton(
-              onPressed: selectedLocation == null ? null : _confirm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+          // Top AppBar
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+
+              child: Row(
+                children: [
+                  Material(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    elevation: 4,
+
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => Navigator.pop(context),
+
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Icon(Icons.arrow_back),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Material(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      elevation: 4,
+
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+
+                        child: Text(
+                          "Pick Location",
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: const Text("Confirm Location"),
+            ),
+          ),
+
+          // Center Pin
+          Center(
+            child: IgnorePointer(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    FIcons.locate,
+                    size: 46,
+                    color: theme.colorScheme.primary,
+                  ),
+
+                  Container(
+                    width: 4,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Bottom Card
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+
+            child: Material(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(24),
+              elevation: 10,
+
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Text(
+                      "Selected Coordinates",
+                      style: theme.textTheme.titleMedium,
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      "${_selectedLocation.latitude.toStringAsFixed(6)}, "
+                      "${_selectedLocation.longitude.toStringAsFixed(6)}",
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isLoadingLocation
+                                ? null
+                                : _goToCurrentLocation,
+
+                            icon: _isLoadingLocation
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.my_location),
+
+                            label: const Text("My Location"),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: _confirm,
+                            child: const Text("Confirm"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

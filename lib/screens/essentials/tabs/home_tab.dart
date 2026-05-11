@@ -123,7 +123,7 @@ class _HomeTabState extends State<HomeTab> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         scrollDirection: Axis.horizontal,
         itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final cat = _categories[i];
           final selected = cat == selectedCategory;
@@ -213,7 +213,7 @@ class _HomeTabState extends State<HomeTab> {
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorWidget: (_, __, ___) =>
+              errorWidget: (_, _, _) =>
                   Container(height: 200, color: theme.colors.muted),
             ),
 

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
@@ -42,7 +41,6 @@ class _NavbarLayoutState extends State<NavbarLayout> {
     final safeIndex = currentIndex >= pages.length ? 0 : currentIndex;
 
     return Scaffold(
-      // Extend body behind the navbar for the glass effect to work
       extendBody: true,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),
@@ -62,7 +60,8 @@ class _NavbarLayoutState extends State<NavbarLayout> {
         },
         child: KeyedSubtree(
           key: ValueKey(safeIndex),
-          child: SizedBox.expand(child: pages[safeIndex]),
+          // child: MapTabWrapper(city: widget.city ?? defaultCity),
+          child: pages[safeIndex],
         ),
       ),
       bottomNavigationBar: _buildBottomBar(theme),
@@ -70,28 +69,20 @@ class _NavbarLayoutState extends State<NavbarLayout> {
   }
 
   Widget _buildBottomBar(FThemeData theme) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              height: 72,
-              decoration: BoxDecoration(
-                color: theme.colors.background.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: theme.colors.border.withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: _buildItems(theme),
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colors.background,
+        border: Border(
+          top: BorderSide(color: theme.colors.border.withValues(alpha: 0.5)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 72,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: _buildItems(theme),
           ),
         ),
       ),
@@ -113,19 +104,19 @@ class _NavbarLayoutState extends State<NavbarLayout> {
 
       return GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick(); // UX: Physical feel
+          HapticFeedback.selectionClick();
           setState(() => currentIndex = index);
         },
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colors.primary.withValues(alpha: 0.1)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
