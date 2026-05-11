@@ -1,0 +1,40 @@
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_imageUrl.isEmpty) {
+      _toast('Please upload an image first');
+      return;
+    }
+
+    final data = {
+      'title': _titleCtrl.text.trim(),
+      'description': _descCtrl.text.trim(),
+      'city': _city,
+      'category': _category,
+      'rating': _rating,
+      'imageUrl': _imageUrl,
+      'lat': _lat,
+      'lng': _lng,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    try {
+      final ref = FirebaseFirestore.instance.collection('places');
+      if (placeId == null) {
+        final doc = await ref.add(data);
+        await pushNotification(placeId: doc.id, title: data['title'], city: data['city'],isUpdated:true);
+      } else {
+        await ref.doc(placeId).update(data);
+        await pushNotification(placeId: doc.id, title: data['title'], city: data['city'], isUpdated:true);
+      }
+      HapticFeedback.mediumImpact();
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      _toast('Error saving data');
+    }
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
+  }

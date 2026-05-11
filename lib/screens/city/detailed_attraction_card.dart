@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -323,85 +322,6 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
     );
   }
 
-  // Widget _buildReviewsSection(FThemeData theme) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Text(
-  //         'Reviews',
-  //         style: theme.typography.lg.copyWith(
-  //           fontWeight: FontWeight.w700,
-  //           color: theme.colors.foreground,
-  //         ),
-  //       ),
-  //       const SizedBox(height: 14),
-  //       StreamBuilder<QuerySnapshot>(
-  //         stream: FirebaseFirestore.instance
-  //             .collection('places')
-  //             .doc(widget.place.id)
-  //             .collection('reviews')
-  //             .where('hidden', isEqualTo: false)
-  //             .orderBy('date', descending: true)
-  //             .snapshots(),
-  //         builder: (_, snap) {
-  //           if (snap.connectionState == ConnectionState.waiting) {
-  //             return Center(
-  //               child: Padding(
-  //                 padding: const EdgeInsets.all(24),
-  //                 child: CircularProgressIndicator(
-  //                   strokeWidth: 2,
-  //                   color: theme.colors.foreground,
-  //                 ),
-  //               ),
-  //             );
-  //           }
-
-  //           final reviews =
-  //               snap.data?.docs.map((e) => Review.fromFirestore(e)).toList() ??
-  //               [];
-
-  //           if (reviews.isEmpty) {
-  //             return Padding(
-  //               padding: const EdgeInsets.symmetric(vertical: 24),
-  //               child: Center(
-  //                 child: Column(
-  //                   children: [
-  //                     Icon(
-  //                       FIcons.messageSquare,
-  //                       size: 36,
-  //                       color: theme.colors.mutedForeground,
-  //                     ),
-  //                     const SizedBox(height: 10),
-  //                     Text(
-  //                       'No reviews yet.\nBe the first to share your experience.',
-  //                       textAlign: TextAlign.center,
-  //                       style: theme.typography.sm.copyWith(
-  //                         color: theme.colors.mutedForeground,
-  //                         height: 1.6,
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             );
-  //           }
-
-  //           return Column(
-  //             children: reviews
-  //                 .map(
-  //                   (r) => Padding(
-  //                     padding: const EdgeInsets.only(bottom: 12),
-  //                     child: _ReviewCard(review: r, theme: theme),
-  //                   ),
-  //                 )
-  //                 .toList(),
-  //           );
-  //         },
-  //       ),
-  //     ],
-  //   );
-  // }
-
   Widget _buildDivider(FThemeData theme) =>
       Divider(height: 1, color: theme.colors.border);
 
@@ -556,80 +476,6 @@ class _StatChip extends StatelessWidget {
             style: theme.typography.sm.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colors.foreground,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReviewCard extends StatelessWidget {
-  final Review review;
-  final FThemeData theme;
-
-  const _ReviewCard({required this.review, required this.theme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colors.muted.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colors.border, width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: theme.colors.foreground.withValues(alpha: 0.08),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  review.userName[0].toUpperCase(),
-                  style: theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colors.foreground,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  review.userName,
-                  style: theme.typography.sm.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colors.foreground,
-                  ),
-                ),
-              ),
-              Row(
-                children: List.generate(5, (i) {
-                  final filled = (i + 1) <= review.rating;
-                  return Icon(
-                    Icons.star,
-                    size: 13,
-                    color: filled
-                        ? Colors.amber
-                        : theme.colors.mutedForeground.withValues(alpha: 0.3),
-                  );
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            review.comment,
-            style: theme.typography.sm.copyWith(
-              color: theme.colors.mutedForeground,
-              height: 1.65,
             ),
           ),
         ],

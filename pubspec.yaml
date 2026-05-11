@@ -28,6 +28,7 @@ dependencies:
   latlong2: ^0.9.1
   http: ^1.6.0
   flutter_dotenv: ^6.0.1
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +41,16 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/locora.png"
   min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#F8FAFC"
+  image: 'assets/splash/light.png'
+  color_dark: "#020617"
+  android_12:
+    color: "#F8FAFC"
+    color_dark: "#020617"
+  image_dark:          'assets/splash/light_1.png'
+  fullscreen: true
 
 flutter:
   uses-material-design: true
