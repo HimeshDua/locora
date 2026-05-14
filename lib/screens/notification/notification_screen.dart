@@ -27,12 +27,10 @@ class NotificationScreen extends StatelessWidget {
             .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          // Loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Empty state
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const _EmptyState();
           }
@@ -42,7 +40,7 @@ class NotificationScreen extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             itemCount: notifications.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 14),
+            separatorBuilder: (_, _) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               return _NotificationCard(data: notifications[index]);
             },

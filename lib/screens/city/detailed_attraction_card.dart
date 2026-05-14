@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/widgets/reviews/review_section.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailAttractionScreen extends StatefulWidget {
   final Place place;
@@ -80,6 +81,8 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
 
   Future<void> _openMaps() async {
     final uri = Uri.parse(widget.place.googleMapsLink);
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override

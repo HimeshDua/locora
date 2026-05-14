@@ -73,46 +73,66 @@ class _ManagePlacesScreenState extends State<ManagePlacesScreen> {
   Widget build(BuildContext context) {
     final theme = FTheme.of(context);
 
-    return Column(
-      children: [
-        _buildSearch(theme),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: _ref.snapshots(),
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colors.foreground,
+    return Scaffold(
+      
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: FButton(
+          onPress: () => {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              backgroundColor: FTheme.of(context).colors.background,
+              builder: (_) => AddOrEditPlaceSheet(),
+            ),
+          },
+          child: Icon(FIcons.penLine),
+        ),
+      ),
+      body: Column(
+        children: [
+          _buildSearch(theme),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _ref.snapshots(),
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colors.foreground,
+                    ),
+                  );
+                }
+
+                final places = (snap.data?.docs ?? [])
+                    .map((e) => Place.fromFirestore(e))
+                    .where(
+                      (p) =>
+                          p.title.toLowerCase().contains(_query.toLowerCase()),
+                    )
+                    .toList();
+
+                if (places.isEmpty) return _buildEmpty(theme);
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                  itemCount: places.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) => _PlaceRow(
+                    place: places[i],
+                    theme: theme,
+                    onEdit: () => _openEditSheet(places[i]),
+                    onDelete: () =>
+                        _confirmDelete(places[i].id, places[i].title),
                   ),
                 );
-              }
-
-              final places = (snap.data?.docs ?? [])
-                  .map((e) => Place.fromFirestore(e))
-                  .where(
-                    (p) => p.title.toLowerCase().contains(_query.toLowerCase()),
-                  )
-                  .toList();
-
-              if (places.isEmpty) return _buildEmpty(theme);
-
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                itemCount: places.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (_, i) => _PlaceRow(
-                  place: places[i],
-                  theme: theme,
-                  onEdit: () => _openEditSheet(places[i]),
-                  onDelete: () => _confirmDelete(places[i].id, places[i].title),
-                ),
-              );
-            },
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

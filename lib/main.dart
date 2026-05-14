@@ -5,11 +5,13 @@ import 'package:forui/forui.dart';
 import 'package:locora/firebase_options.dart';
 import 'package:locora/utils/cloudinary_config.dart';
 import 'package:locora/utils/persistance.dart';
-import 'package:locora/wrapper/auth.dart';
+import 'package:locora/wrapper/auth_gate.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await dotenv.load(fileName: ".env");
 
@@ -56,6 +58,7 @@ class _ApplicationState extends State<Application> {
   @override
   void initState() {
     super.initState();
+    // _removeSplashScreen();
     _loadTheme();
   }
 

@@ -7,6 +7,7 @@ import 'package:locora/screens/admin/dashboard.dart';
 import 'package:locora/screens/essentials/tabs/favorites_tab.dart';
 import 'package:locora/screens/essentials/tabs/home_tab.dart';
 import 'package:locora/screens/essentials/tabs/profile_tab.dart';
+import 'package:locora/screens/notification/notification_screen.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/widgets/map/map_wrapper.dart';
 
@@ -29,6 +30,7 @@ class _NavbarLayoutState extends State<NavbarLayout> {
     if (widget.admin == true) const AdminDashboardScreen(),
     MapTabWrapper(city: widget.city ?? defaultCity),
     const FavoritesTab(),
+    NotificationScreen(),
     ProfileTab(
       isDarkMode: Application.of(context).isDarkMode,
       onThemeToggle: Application.of(context).toggleTheme,
@@ -96,6 +98,7 @@ class _NavbarLayoutState extends State<NavbarLayout> {
         _NavItem(icon: FIcons.layoutDashboard, label: "Admin"),
       _NavItem(icon: FIcons.map, label: "Map"),
       _NavItem(icon: FIcons.heart, label: "Favs"),
+      _NavItem(icon: FIcons.bell, label: "Notification"),
       _NavItem(icon: FIcons.user, label: "Profile"),
     ];
 

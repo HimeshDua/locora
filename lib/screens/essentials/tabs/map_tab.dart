@@ -1,13 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:forui/forui.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:locora/types/index.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapTab extends StatefulWidget {
   final List<Place> places;
@@ -22,9 +19,6 @@ class _MapTabState extends State<MapTab> {
   final MapController _mapController = MapController();
 
   Position? _currentPosition;
-  List<LatLng> _routePoints = [];
-
-  final String orsApiKey = dotenv.env['OPEN_ROUTER_MAP_KEY'] ?? '';
 
   @override
   void initState() {
@@ -33,11 +27,6 @@ class _MapTabState extends State<MapTab> {
   }
 
   Future<void> _initLocation() async {
-    if (orsApiKey.isEmpty) {
-      debugPrint("ORS API KEY MISSING");
-      return;
-    }
-
     final permission = await Geolocator.requestPermission();
 
     if (permission == LocationPermission.denied ||
@@ -52,39 +41,14 @@ class _MapTabState extends State<MapTab> {
     });
   }
 
-  Future<void> _getRoute(Place place) async {
-    if (_currentPosition == null) return;
+  Future<void> _openDirections(Place place) async {
+    if (place.lat == null || place.lng == null) return;
 
-    final start =
-        '${_currentPosition!.longitude},${_currentPosition!.latitude}';
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}',
+    );
 
-    final end = '${place.lng},${place.lat}';
-
-    final url =
-        'https://api.openrouteservice.org/v2/directions/driving-car'
-        '?api_key=$orsApiKey'
-        '&start=$start'
-        '&end=$end';
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      if (data['features'] == null || data['features'].isEmpty) {
-        return;
-      }
-
-      final coords = data['features'][0]['geometry']['coordinates'] as List;
-
-      final points = coords.map((c) {
-        return LatLng(c[1], c[0]);
-      }).toList();
-
-      setState(() {
-        _routePoints = points;
-      });
-    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   void _recenter() {
@@ -96,19 +60,75 @@ class _MapTabState extends State<MapTab> {
     );
   }
 
+  void _openPlaceSheet(Place place) {
+    final theme = FTheme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colors.background,
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+
+            children: [
+              Text(
+                place.title,
+                style: theme.typography.lg.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                place.category,
+                style: theme.typography.sm.copyWith(
+                  color: theme.colors.mutedForeground,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+
+                child: FButton(
+                  onPress: () {
+                    Navigator.pop(context);
+                    _openDirections(place);
+                  },
+
+                  child: const Text('Get Directions'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = FTheme.of(context);
+
     return Scaffold(
       body: FlutterMap(
         mapController: _mapController,
-        options: MapOptions(
+
+        options: const MapOptions(
           initialCenter: LatLng(24.8607, 67.0011),
-          initialZoom: 16,
+          initialZoom: 12,
         ),
 
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+
             userAgentPackageName: 'com.locora.app',
           ),
 
@@ -125,19 +145,36 @@ class _MapTabState extends State<MapTab> {
                   .map((place) {
                     return Marker(
                       point: LatLng(place.lat!, place.lng!),
-                      width: 80,
-                      height: 80,
+
+                      width: 70,
+                      height: 70,
 
                       child: GestureDetector(
-                        onTap: () {
-                          _getRoute(place);
-                        },
+                        onTap: () => _openPlaceSheet(place),
 
-                        child: const Icon(
-                          Icons.location_on,
-                          size: 40,
-                          color: Colors.red,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colors.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 10,
+                                color: Colors.black.withValues(alpha: 0.18),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: const Icon(
+                            FIcons.mapPin,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
+                        // child: const Icon(
+                        //   Icons.location_on,
+                        //   color: Colors.red,
+                        //   size: 38,
+                        // ),
                       ),
                     );
                   }),
@@ -148,6 +185,7 @@ class _MapTabState extends State<MapTab> {
                     _currentPosition!.latitude,
                     _currentPosition!.longitude,
                   ),
+
                   width: 60,
                   height: 60,
 
@@ -155,11 +193,6 @@ class _MapTabState extends State<MapTab> {
                 ),
             ],
           ),
-
-          if (_routePoints.isNotEmpty)
-            PolylineLayer(
-              polylines: [Polyline(points: _routePoints, strokeWidth: 5)],
-            ),
         ],
       ),
 
@@ -167,8 +200,10 @@ class _MapTabState extends State<MapTab> {
 
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90),
+
         child: FloatingActionButton(
           onPressed: _recenter,
+
           child: const Icon(FIcons.locate),
         ),
       ),

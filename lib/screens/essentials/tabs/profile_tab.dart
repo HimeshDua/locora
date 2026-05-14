@@ -1,8 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:locora/data/cities.dart';
+import 'package:locora/screens/notification/notification_screen.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/utils/persistance.dart';
@@ -72,8 +75,6 @@ class _ProfileTabState extends State<ProfileTab> {
       Navigator.pushNamed(context, '/');
     }
   }
-
-  // Inside _ProfileTabState — add this method alongside _openEditName / _openCityPicker
 
   Future<void> _resetPassword() async {
     final email = user?.email;
@@ -708,7 +709,12 @@ class _ProfileTabState extends State<ProfileTab> {
           icon: FIcons.bellRing,
           label: 'Notifications',
           theme: theme,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => NotificationScreen()),
+            );
+          },
         ),
         _MenuDivider(theme: theme),
         _MenuItem(

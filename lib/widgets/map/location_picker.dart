@@ -211,8 +211,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.my_location),
-
+                                : const Icon(FIcons.locate),
                             label: const Text("My Location"),
                           ),
                         ),
@@ -220,8 +219,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                         const SizedBox(width: 12),
 
                         Expanded(
-                          child: FilledButton(
-                            onPressed: _confirm,
+                          child: FButton(
+                            variant: .primary,
+                            onPress: _confirm,
                             child: const Text("Confirm"),
                           ),
                         ),
