@@ -43,19 +43,19 @@ class _MapTabState extends State<MapTab> {
   Future<void> _initLocation() async {
     setState(() => _isLocating = true);
 
-    final permission = await Geolocator.requestPermission();
-
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      if (!mounted) return;
-      setState(() {
-        _isLocating = false;
-        _locationDenied = true;
-      });
-      return;
-    }
-
     try {
+      final permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() {
+          _isLocating = false;
+          _locationDenied = true;
+        });
+        return;
+      }
+
       final pos = await Geolocator.getCurrentPosition();
 
       if (!mounted) return;

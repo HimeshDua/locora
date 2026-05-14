@@ -37,30 +37,33 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Future<void> _goToCurrentLocation() async {
     setState(() => _isLoadingLocation = true);
 
-    final permission = await Geolocator.requestPermission();
-
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      setState(() {
-        _isLoadingLocation = false;
-        _locationDenied = true;
-      });
-      return;
-    }
-
     try {
+      final permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() {
+          _isLoadingLocation = false;
+          _locationDenied = true;
+        });
+        return;
+      }
+
       final position = await Geolocator.getCurrentPosition();
 
       final latLng = LatLng(position.latitude, position.longitude);
 
       _mapController.move(latLng, 16);
 
+      if (!mounted) return;
       setState(() {
         _selectedLocation = latLng;
         _isLoadingLocation = false;
         _locationDenied = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() => _isLoadingLocation = false);
     }
   }

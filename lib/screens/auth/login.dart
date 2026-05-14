@@ -4,9 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:locora/screens/auth/register.dart';
 import 'package:locora/utils/redirects.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:locora/utils/is_indicators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -67,56 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
       }
-    } finally {
-      if (mounted) setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => isLoading = true);
-
-    try {
-      final GoogleSignInAccount googleUser = await GoogleSignIn.instance
-          .authenticate();
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCred = await _auth.signInWithCredential(
-        credential,
-      );
-      final User? user = userCred.user;
-
-      if (user == null) throw Exception('Firebase User is null');
-
-      final userDocRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid);
-      final doc = await userDocRef.get();
-
-      if (!doc.exists) {
-        await userDocRef.set({
-          'uid': user.uid,
-          'name': user.displayName ?? 'Anonymous',
-          'city': null,
-          'email': user.email ?? '',
-          'photoURL': user.photoURL ?? '',
-          'createdAt': FieldValue.serverTimestamp(),
-          'admin': isAdmin(user.email!) || false,
-        });
-      }
-
-      if (mounted) redirectBasedOnAuthnCity(context);
-    } catch (e) {
-      String errorMessage = 'An unexpected error occurred.';
-      if (e is FirebaseAuthException) {
-        errorMessage = e.message ?? 'Authentication failed.';
-      } else if (e.toString().contains('network_error')) {
-        errorMessage = 'Please check your internet connection.';
-      }
-      FToast(title: Text(errorMessage));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -340,53 +287,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
 
                             const SizedBox(height: 20),
-
-                            Row(
-                              children: [
-                                const Expanded(child: FDivider()),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  child: Text(
-                                    'OR',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: theme.colors.mutedForeground,
-                                      letterSpacing: 1.4,
-                                    ),
-                                  ),
-                                ),
-                                const Expanded(child: FDivider()),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            FButton(
-                              variant: .outline,
-                              onPress: isLoading ? null : _signInWithGoogle,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    FIcons.globe,
-                                    color: theme.colors.foreground,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Continue with Google',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colors.foreground,
-                                      letterSpacing: -0.1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
 
                             const Spacer(),
 

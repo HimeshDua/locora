@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:locora/data/cities.dart';
 import 'package:locora/utils/is_indicators.dart';
 import 'package:locora/utils/persistance.dart';
@@ -99,6 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final city = pakistaniCities.firstWhere((c) => c.name == selectedCity);
       await saveSelectedCity(city);
 
+      // ignore: use_build_context_synchronously
       redirectBasedOnAuthnCity(context);
     } on FirebaseAuthException catch (e) {
       final message = switch (e.code) {
@@ -112,57 +112,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
       }
-    } finally {
-      if (mounted) setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => isLoading = true);
-
-    try {
-      await GoogleSignIn.instance.initialize();
-      final GoogleSignInAccount googleUser = await GoogleSignIn.instance
-          .authenticate();
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCred = await _auth.signInWithCredential(
-        credential,
-      );
-      final User? user = userCred.user;
-
-      if (user == null) throw Exception('Firebase User is null');
-
-      final userDocRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid);
-      final doc = await userDocRef.get();
-
-      if (!doc.exists) {
-        await userDocRef.set({
-          'uid': user.uid,
-          'name': user.displayName ?? 'Anonymous',
-          'city': selectedCity,
-          'email': user.email ?? '',
-          'photoURL': user.photoURL ?? '',
-          'createdAt': FieldValue.serverTimestamp(),
-          'admin': isAdmin(user.email!) || false,
-        });
-      }
-
-      if (mounted) redirectBasedOnAuthnCity(context);
-    } catch (e) {
-      String errorMessage = 'An unexpected error occurred.';
-      if (e is FirebaseAuthException) {
-        errorMessage = e.message ?? 'Authentication failed.';
-      } else if (e.toString().contains('network_error')) {
-        errorMessage = 'Please check your internet connection.';
-      }
-      FToast(title: Text(errorMessage));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -439,33 +388,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const Expanded(child: FDivider()),
                     ],
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  FButton(
-                    variant: .outline,
-                    onPress: isLoading ? null : _signInWithGoogle,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          FIcons.globe,
-                          color: theme.colors.foreground,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colors.foreground,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
 
                   const Spacer(),
