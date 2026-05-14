@@ -11,6 +11,7 @@ import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
 import 'package:locora/widgets/elements/section_label.dart';
 import 'package:locora/widgets/map/location_picker.dart';
+import 'package:locora/widgets/map/map_tiles.dart';
 import 'package:locora/utils/cloudinary_config.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:locora/widgets/reviews/rating_card.dart';
@@ -482,8 +483,7 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
     return GestureDetector(
       onTap: _openMapPicker,
       child: Container(
-        height: 140,
-        //  height: 180,
+        height: 168,
         width: double.infinity,
         decoration: BoxDecoration(
           color: theme.colors.muted,
@@ -506,11 +506,7 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
                         ),
 
                         children: [
-                          TileLayer(
-                            urlTemplate:
-                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.locora.app',
-                          ),
+                          locoraEnglishTileLayer(context),
 
                           MarkerLayer(
                             markers: [
@@ -519,14 +515,49 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
                                 width: 50,
                                 height: 50,
 
-                                child: Icon(
-                                  FIcons.locate,
-                                  color: theme.colors.primary,
-                                  size: 28,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 34,
+                                      height: 34,
+                                      decoration: BoxDecoration(
+                                        color: theme.colors.primary,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.18,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        FIcons.mapPin,
+                                        color: Colors.white,
+                                        size: 17,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 3,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: theme.colors.primary,
+                                        borderRadius: BorderRadius.circular(99),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
+                          const LocoraMapAttribution(),
                         ],
                       ),
                     ),
@@ -559,6 +590,35 @@ class _AddOrEditPlaceSheetState extends State<AddOrEditPlaceSheet> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 10,
+                      bottom: 10,
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 190),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colors.background.withValues(
+                            alpha: 0.92,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: theme.colors.border,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          '${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.typography.xs.copyWith(
+                            color: theme.colors.foreground,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),

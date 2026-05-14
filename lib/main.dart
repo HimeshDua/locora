@@ -11,8 +11,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
   await dotenv.load(fileName: ".env");
 
   CloudinaryConfig.initialize();
@@ -58,7 +56,6 @@ class _ApplicationState extends State<Application> {
   @override
   void initState() {
     super.initState();
-    // _removeSplashScreen();
     _loadTheme();
   }
 

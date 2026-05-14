@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:locora/screens/auth/login.dart';
 import 'package:locora/screens/essentials/setup_screen.dart';
 import 'package:locora/screens/essentials/navbar_layout.dart';

@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:forui/forui.dart';
+import 'package:locora/widgets/map/map_tiles.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   final double? initialLat;
@@ -21,6 +22,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   late LatLng _selectedLocation;
 
   bool _isLoadingLocation = false;
+  bool _locationDenied = false;
 
   @override
   void initState() {
@@ -39,20 +41,28 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      setState(() => _isLoadingLocation = false);
+      setState(() {
+        _isLoadingLocation = false;
+        _locationDenied = true;
+      });
       return;
     }
 
-    final position = await Geolocator.getCurrentPosition();
+    try {
+      final position = await Geolocator.getCurrentPosition();
 
-    final latLng = LatLng(position.latitude, position.longitude);
+      final latLng = LatLng(position.latitude, position.longitude);
 
-    _mapController.move(latLng, 16);
+      _mapController.move(latLng, 16);
 
-    setState(() {
-      _selectedLocation = latLng;
-      _isLoadingLocation = false;
-    });
+      setState(() {
+        _selectedLocation = latLng;
+        _isLoadingLocation = false;
+        _locationDenied = false;
+      });
+    } catch (_) {
+      setState(() => _isLoadingLocation = false);
+    }
   }
 
   void _confirm() {
@@ -61,7 +71,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final materialTheme = Theme.of(context);
+    final theme = FTheme.of(context);
 
     return Scaffold(
       body: Stack(
@@ -81,14 +92,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
 
             children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.locora.app',
-              ),
+              locoraEnglishTileLayer(context),
+              const LocoraMapAttribution(),
             ],
           ),
 
-          // Top AppBar
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -96,7 +104,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               child: Row(
                 children: [
                   Material(
-                    color: theme.colorScheme.surface,
+                    color: theme.colors.background.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(14),
                     elevation: 4,
 
@@ -104,9 +112,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       borderRadius: BorderRadius.circular(14),
                       onTap: () => Navigator.pop(context),
 
-                      child: const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Icon(Icons.arrow_back),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: theme.colors.foreground,
+                        ),
                       ),
                     ),
                   ),
@@ -115,8 +126,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
                   Expanded(
                     child: Material(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(18),
+                      color: theme.colors.background.withValues(alpha: 0.96),
+                      borderRadius: BorderRadius.circular(14),
                       elevation: 4,
 
                       child: Padding(
@@ -125,9 +136,26 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           vertical: 14,
                         ),
 
-                        child: Text(
-                          "Pick Location",
-                          style: theme.textTheme.titleMedium,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Pick Location',
+                              style: theme.typography.sm.copyWith(
+                                color: theme.colors.foreground,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Drag the map to place the pin',
+                              style: theme.typography.xs.copyWith(
+                                color: theme.colors.mutedForeground,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -137,23 +165,38 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
           ),
 
-          // Center Pin
           Center(
             child: IgnorePointer(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    FIcons.locate,
-                    size: 46,
-                    color: theme.colorScheme.primary,
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: theme.colors.primary,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.white, width: 2.4),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 16,
+                          offset: const Offset(0, 7),
+                          color: Colors.black.withValues(alpha: 0.22),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      FIcons.mapPin,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                   ),
 
                   Container(
                     width: 4,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
+                      color: theme.colors.primary,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -162,15 +205,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
           ),
 
-          // Bottom Card
           Positioned(
             left: 16,
             right: 16,
-            bottom: 24,
+            bottom: MediaQuery.of(context).padding.bottom + 16,
 
             child: Material(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
+              color: theme.colors.background.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(18),
               elevation: 10,
 
               child: Padding(
@@ -182,16 +224,45 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
                   children: [
                     Text(
-                      "Selected Coordinates",
-                      style: theme.textTheme.titleMedium,
+                      'Selected Coordinates',
+                      style: theme.typography.sm.copyWith(
+                        color: theme.colors.foreground,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
 
                     const SizedBox(height: 8),
 
-                    Text(
-                      "${_selectedLocation.latitude.toStringAsFixed(6)}, "
-                      "${_selectedLocation.longitude.toStringAsFixed(6)}",
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colors.muted,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${_selectedLocation.latitude.toStringAsFixed(6)}, '
+                        '${_selectedLocation.longitude.toStringAsFixed(6)}',
+                        style: theme.typography.sm.copyWith(
+                          color: theme.colors.foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
+
+                    if (_locationDenied) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Location access is off. You can still drag the map to choose a point.',
+                        style: theme.typography.xs.copyWith(
+                          color: theme.colors.mutedForeground,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 18),
 
@@ -211,8 +282,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(FIcons.locate),
-                            label: const Text("My Location"),
+                                : Icon(
+                                    _locationDenied
+                                        ? FIcons.locateOff
+                                        : FIcons.locate,
+                                  ),
+                            label: const Text('My Location'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  materialTheme.colorScheme.onSurface,
+                            ),
                           ),
                         ),
 
@@ -222,7 +301,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           child: FButton(
                             variant: .primary,
                             onPress: _confirm,
-                            child: const Text("Confirm"),
+                            child: const Text('Confirm'),
                           ),
                         ),
                       ],

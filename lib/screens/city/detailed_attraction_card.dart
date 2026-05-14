@@ -3,9 +3,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:forui/forui.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:locora/types/index.dart';
 import 'package:locora/utils/firebase/actions.dart';
+import 'package:locora/widgets/map/map_tiles.dart';
 import 'package:locora/widgets/reviews/review_section.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -80,9 +83,43 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
   }
 
   Future<void> _openMaps() async {
-    final uri = Uri.parse(widget.place.googleMapsLink);
+    final uri = _mapsUri();
 
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (uri == null) {
+      _showMessage('No map location is available for this place.');
+      return;
+    }
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened) _showMessage('Could not open Maps.');
+  }
+
+  Uri? _mapsUri() {
+    final link = widget.place.googleMapsLink.trim();
+    if (link.isNotEmpty) {
+      final uri = Uri.tryParse(link);
+      if (uri != null && uri.hasScheme) return uri;
+    }
+
+    if (_hasCoordinates) {
+      return Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${widget.place.lat},${widget.place.lng}',
+      );
+    }
+
+    return null;
+  }
+
+  bool get _hasCoordinates =>
+      widget.place.lat != null &&
+      widget.place.lng != null &&
+      widget.place.lat != 0 &&
+      widget.place.lng != 0;
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
   }
 
   @override
@@ -113,6 +150,12 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
                     const SizedBox(height: 24),
                     _buildDivider(theme),
                     const SizedBox(height: 24),
+                    if (_hasCoordinates) ...[
+                      _buildMapPreview(theme),
+                      const SizedBox(height: 24),
+                      _buildDivider(theme),
+                      const SizedBox(height: 24),
+                    ],
                     buildReviewsSection(theme, widget.place.id),
                   ]),
                 ),
@@ -320,6 +363,148 @@ class _DetailAttractionScreenState extends State<DetailAttractionScreen> {
         Text(
           widget.place.description,
           style: TextStyle(color: theme.colors.mutedForeground, height: 1.7),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapPreview(FThemeData theme) {
+    final point = LatLng(widget.place.lat!, widget.place.lng!);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Location',
+              style: theme.typography.lg.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colors.foreground,
+              ),
+            ),
+            const Spacer(),
+            FButton(
+              onPress: _openMaps,
+              variant: .outline,
+              size: .sm,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(FIcons.navigation, size: 14),
+                  const SizedBox(width: 6),
+                  const Text('Directions'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _openMaps,
+          child: Container(
+            height: 178,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: theme.colors.muted,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: theme.colors.border, width: 0.8),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    options: MapOptions(
+                      initialCenter: point,
+                      initialZoom: 15,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.none,
+                      ),
+                    ),
+                    children: [
+                      locoraEnglishTileLayer(context),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: point,
+                            width: 50,
+                            height: 58,
+                            alignment: Alignment.topCenter,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: theme.colors.primary,
+                                    borderRadius: BorderRadius.circular(13),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2.2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 5),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.22,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    FIcons.mapPin,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                                Container(
+                                  width: 3,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: theme.colors.primary,
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const LocoraMapAttribution(),
+                    ],
+                  ),
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colors.background.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(
+                          color: theme.colors.border,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        widget.place.city,
+                        style: theme.typography.xs.copyWith(
+                          color: theme.colors.foreground,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
