@@ -514,7 +514,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   ),
                   child: Stack(
                     children: [
-                      Image.asset(
+                      Image.network(
                         'assets/onboarding/2.jpeg',
                         height: 190,
                         width: double.infinity,

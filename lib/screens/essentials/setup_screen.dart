@@ -82,7 +82,7 @@ class _SetupScreenState extends State<SetupScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
+          Image.network(
             _bgImage,
             fit: BoxFit.cover,
             width: size.width,

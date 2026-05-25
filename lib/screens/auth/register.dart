@@ -134,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(_bgImage, fit: BoxFit.cover),
+                Image.network(_bgImage, fit: BoxFit.cover),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -156,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       Row(
                         children: [
-                          Image.asset(
+                          Image.network(
                             'assets/icon/locora.png',
                             width: 22,
                             height: 22,
